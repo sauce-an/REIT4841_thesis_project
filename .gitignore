@@ -1,0 +1,14 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# In-progress checkpoints / temporary logs
+*_checkpoint.npy
+*.tmp
+*.log
+
+# IDE & OS files
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,180 @@
+================================================================================
+ZABER SCAN PROJECT — NOTES
+================================================================================
+Last updated: 2026-08-06
+
+================================================================================
+HARDWARE SETUP
+================================================================================
+
+Devices:        3x Zaber T-LSM050A (50 mm travel, linear stage)
+Device ID:      6210 (all three)
+Firmware:       5.35
+Protocol:       Binary
+Serial Port:    COM5
+Connection:     Daisy-chained via USB
+
+NI DAQ Setup (USB-6451 / Dev1):
+  Channel 7  (Dev1/ai7)  → Laser Terminal AC-Coupled LFI Signal
+  Channel 15 (Dev1/ai15) → Optical Chopper Sync Signal (~800 Hz)
+
+Device Address Mapping (UPDATED after realignment):
+  Address 4 → Y-axis (Up/Down)
+  Address 5 → Z-axis (Forward/Backward / Focus)
+  Address 6 → X-axis (Left/Right)
+
+Z-Axis Behaviour:
+  - Homing (position 0) = moves AWAY from the optical bench (retracted, safe)
+  - Increasing position = moves TOWARD the optical bench (closer, collision risk)
+  - Higher native unit values = closer to the bench = more dangerous
+
+IMPORTANT: Always close Zaber Console before running any script!
+
+================================================================================
+TARGET (FIGURINE)
+================================================================================
+
+Dimensions:     ~35 mm wide × ~40 mm tall
+Scan area:      35.0 mm (X) × 40.0 mm (Y)
+Step size:       0.5 mm
+Grid points:    70 × 80 = 5,600 points
+
+================================================================================
+SAFETY
+================================================================================
+
+Z_SAFETY_MAX_NATIVE = 522926
+  - This is the maximum Z position in native units.
+  - Z must NEVER exceed this to avoid collision with the optical bench/target.
+  - The script will abort and home Z (retract to safety) if exceeded.
+  - May need recalibration — user said they might update this value.
+
+FOCUS_MM = 25.0 (current setting)
+  - NOTE: 25.0 mm may be very close to or slightly exceed the safety limit
+    (~24.9 mm). Consider reducing to add a margin (e.g., 24.0 mm).
+  - User has not yet confirmed the exact focus distance.
+
+================================================================================
+SCRIPTS IN PROJECT
+================================================================================
+
+1. device_check.py
+   Purpose:   Diagnostic — detects all Zaber devices and prints address, ID, name,
+              and current position (native units).
+   Usage:     python device_check.py
+   Status:    DONE
+
+2. daq_check.py
+   Purpose:   Diagnostic — detects NI DAQ device (Dev1), displays available channels,
+              and verifies live reading from Dev1/ai7 and Dev1/ai15.
+   Usage:     python daq_check.py
+   Status:    DONE
+
+3. daq_live.py
+   Purpose:   Live oscilloscope — 100 kS/s real-time dual-trace view of Laser (ai7)
+              and Chopper Sync (ai15) with live frequency & demodulation metrics.
+   Usage:     python daq_live.py
+   Status:    DONE
+
+4. scan_tester1.py
+   Purpose:   Raster scan across X-Y plane at a fixed Z focus distance.
+              Uses serpentine (boustrophedon) pattern.
+              Includes Z-axis safety limit check.
+   Usage:     python scan_tester1.py
+   Status:    IN PROGRESS — ready for test
+
+5. home_dev4_y.py
+   Purpose:   Test script — homes only Y-axis (Device 4: Up/Down).
+   Status:    DONE — confirmed Y = Up/Down
+
+6. home_dev6_x.py
+   Purpose:   Test script — homes only X-axis (Device 6: Left/Right).
+   Status:    DONE — confirmed X = Left/Right
+
+7. home_dev5_z.py
+   Purpose:   Test script — homes only Z-axis (Device 5: Forward/Backward).
+   Status:    DONE — confirmed Z = Forward/Backward
+
+================================================================================
+SCAN STRATEGY
+================================================================================
+
+Direction:    Bottom-left → Top-right (recommended and agreed)
+Pattern:      Serpentine / boustrophedon
+  - Even rows: X sweeps left → right
+  - Odd rows:  X sweeps right → left
+  - Y always steps upward (one direction only, best for accuracy)
+
+Current scan_tester1.py behaviour:
+  - Homes all axes to (0, 0, 0)
+  - Moves Z to FOCUS_MM
+  - Scans from (0, 0) to (WIDTH_MM, HEIGHT_MM)
+  - Returns X and Y to origin when done
+
+PROBLEM: The script currently scans from home (0,0), NOT from the actual
+position of the target. It needs to be updated to scan between user-defined
+start and end positions (see TO-DO below).
+
+================================================================================
+TO-DO (NEXT SESSION)
+================================================================================
+
+1. [ ] CONFIGURE START/END POSITIONS FOR RASTER SCAN
+       - User will manually position stages to bottom-left corner of target
+       - Run device_check.py → record X, Y positions (native units)
+       - User will position stages to top-right corner of target
+       - Run device_check.py → record X, Y positions (native units)
+       - Update scan_tester1.py to use these absolute start/end positions
+         instead of scanning from home (0,0)
+
+2. [ ] UPDATE Z SAFETY LIMIT (possibly)
+       - User may recalibrate Z_SAFETY_MAX_NATIVE after repositioning
+       - Current value: 522926
+
+3. [ ] CONFIRM / ADJUST FOCUS_MM
+       - Current: 25.0 mm (may exceed safety limit of ~24.9 mm)
+       - User needs to set the correct working distance for their sensor/optic
+
+4. [ ] ADD DAQ TRIGGER
+       - scan_tester1.py has a placeholder: time.sleep(0.05)
+       - Replace with actual DAQ trigger when hardware is ready
+
+5. [ ] VERIFY STEP SIZE
+       - Current: 0.5 mm — user has not yet confirmed this is appropriate
+       - Depends on sensor spot size / desired resolution
+
+================================================================================
+CALIBRATED COIN SCAN POSITIONS (2026-08-20)
+================================================================================
+
+Target: New Taiwan Dollar Coin (20 mm diameter)
+Resolution: ~200 um step (4,199 microsteps/step)
+
+Start Corner (Bottom-Left):
+  Device 4 (Y): 439,860 native
+  Device 6 (X): 933,521 native
+  Device 5 (Z):  96,412 native (Focus)
+
+End Corner (Top-Right):
+  Device 4 (Y): 973,061 native
+  Device 6 (X): 457,058 native
+  Device 5 (Z):  96,412 native (Focus)
+
+Scan Area:
+  X Span: 476,463 native (~22.69 mm) → 114 points
+  Y Span: 533,201 native (~25.39 mm) → 128 points
+  Total Grid: 114 x 128 = 14,592 pixels (~200 um step)
+
+================================================================================
+TERMINAL ACCESS NOTE
+================================================================================
+
+The AI assistant CANNOT run commands directly due to a PATH/shell issue on
+this machine. Workaround:
+
+  Option A: User runs scripts and pastes output into chat.
+  Option B: User redirects output to a file:
+            python device_check.py 2>&1 | Out-File output.txt
+            Then tells assistant to read output.txt.
+
+================================================================================
