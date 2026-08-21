@@ -153,17 +153,18 @@ Resolution: ~200 um step (4,199 microsteps/step)
 Start Corner (Bottom-Left):
   Device 4 (Y): 439,860 native
   Device 6 (X): 933,521 native
-  Device 5 (Z):  96,412 native (Focus)
+  Device 5 (Z): 104,451 native (Focus - tuned)
 
 End Corner (Top-Right):
   Device 4 (Y): 973,061 native
   Device 6 (X): 457,058 native
-  Device 5 (Z):  96,412 native (Focus)
+  Device 5 (Z): 104,451 native (Focus - tuned)
 
 Scan Area:
-  X Span: 476,463 native (~22.69 mm) → 114 points
-  Y Span: 533,201 native (~25.39 mm) → 128 points
-  Total Grid: 114 x 128 = 14,592 pixels (~200 um step)
+  X Span: 476,463 native (~22.69 mm)
+  Y Span: 533,201 native (~25.39 mm)
+  100 um Grid: 228 x 255 = 58,140 pixels (~100 um step)
+  200 um Grid: 114 x 128 = 14,592 pixels (~200 um step)
 
 ================================================================================
 TERMINAL ACCESS NOTE

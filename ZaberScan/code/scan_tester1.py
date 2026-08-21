@@ -39,14 +39,14 @@ X_START_NATIVE = 933521    # Left boundary of coin
 X_END_NATIVE   = 457058    # Right boundary of coin
 Y_START_NATIVE = 439860    # Bottom boundary of coin
 Y_END_NATIVE   = 973061    # Top boundary of coin
-Z_FOCUS_NATIVE = 96412     # Fixed Z focus depth
+Z_FOCUS_NATIVE = 104451    # Fixed Z focus depth (tuned for optimal signal)
 
 # Note: Physical setup is confirmed collision-safe across full travel range.
 
-# Target Step Size (50 um)
-TARGET_STEP_UM = 50.0
+# Target Step Size (100 um)
+TARGET_STEP_UM = 100.0
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
-STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
+STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~2099.74 steps
 
 # Calculate Grid Points
 NUM_X = int(round(abs(X_END_NATIVE - X_START_NATIVE) / STEP_NATIVE)) + 1
