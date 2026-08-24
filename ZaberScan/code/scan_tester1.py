@@ -33,18 +33,19 @@ Y_DEVICE = 4  # Up / Down
 Z_DEVICE = 5  # Forward / Backward (Focus)
 X_DEVICE = 6  # Left / Right
 
-# Calibrated Scan Area (Native Microsteps)
+# Optimized Scan Area (Native Microsteps - tightly cropped with ~0.7 mm safety margin)
 # Microstep resolution = 0.047625 um/step (approx 20,997.4 steps/mm)
-X_START_NATIVE = 933521    # Left boundary of coin
-X_END_NATIVE   = 457058    # Right boundary of coin
-Y_START_NATIVE = 439860    # Bottom boundary of coin
-Y_END_NATIVE   = 973061    # Top boundary of coin
-Z_FOCUS_NATIVE = 104451    # Fixed Z focus depth (tuned for optimal signal)
+X_START_NATIVE = 890000    # Left boundary of coin window (~21.4 mm span)
+X_END_NATIVE   = 440000    # Right boundary of coin window
+Y_START_NATIVE = 475000    # Bottom boundary of coin window (~20.5 mm span)
+Y_END_NATIVE   = 905000    # Top boundary of coin window
+Z_FOCUS_NATIVE = 96412     # Fixed Z focus depth (original 200 um scan position)
 
 # Note: Physical setup is confirmed collision-safe across full travel range.
 
 # Target Step Size (100 um)
 TARGET_STEP_UM = 100.0
+SCAN_LABEL = "scan_2"  # Identifier for multi-round scans (e.g. scan_2, scan_3)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~2099.74 steps
 
@@ -66,9 +67,9 @@ scan_height_mm = abs(Y_END_NATIVE - Y_START_NATIVE) * 0.047625 / 1000.0
 # ==============================================================================
 DAQ_CHANNEL = "Dev1/ai7"           # Laser terminal AC-coupled signal (Channel 7)
 CHOPPER_FREQ_HZ = 800              # Optical chopper frequency on bench (~800 Hz)
-PERIODS_PER_POINT = 10             # Chopper periods averaged per pixel
-DAQ_RATE = 10_000                  # 10 kHz DAQ sampling rate
-DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 125 samples
+PERIODS_PER_POINT = 16             # Chopper periods averaged per pixel (Avg 16 matching oscilloscope)
+DAQ_RATE = 50_000                  # 50 kHz DAQ sampling rate for high waveform resolution
+DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 1,000 samples per pixel (20 ms)
 
 
 def extract_confocal_signal(raw_samples: np.ndarray) -> float:
@@ -155,7 +156,7 @@ try:
 
                 # Periodic Checkpoint Saving every 10 rows
                 if (row_idx + 1) % 10 == 0:
-                    np.save(os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_checkpoint.npy"), image_data)
+                    np.save(os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}_checkpoint.npy"), image_data)
 
                 # Progress Report after each row
                 elapsed = time.time() - start_time
@@ -190,16 +191,26 @@ print("PROCESSING & SAVING IMAGE DATA")
 print("=" * 70)
 
 # Save Raw Numerical Data (for MATLAB / Python / ImageJ analysis)
-npy_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um.npy")
-csv_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um.csv")
-png_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um.png")
+npy_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.npy")
+csv_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.csv")
+png_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.png")
 
 np.save(npy_path, image_data)
 np.savetxt(csv_path, image_data, delimiter=",", fmt="%.6e")
 print(f"  - Saved raw matrix to: {npy_path}")
 print(f"  - Saved CSV data to  : {csv_path}")
 
-# Plot & Save Grayscale Figure
+# Compute Adaptive Robust Contrast Limits (1% - 99% percentile)
+# This eliminates outlier specular saturation spikes (10V) and dropouts (0V),
+# stretching the full black-to-white dynamic range across real surface features.
+vmin = float(np.percentile(image_data, 1.0))
+vmax = float(np.percentile(image_data, 99.0))
+if vmax - vmin < 1e-3:
+    vmin, vmax = float(np.min(image_data)), float(np.max(image_data))
+print(f"  - Raw signal range: [{np.min(image_data):.3f} V, {np.max(image_data):.3f} V]")
+print(f"  - Adaptive display range (1%-99%): [{vmin:.3f} V, {vmax:.3f} V]")
+
+# Plot & Save Grayscale Figure with Adaptive Contrast
 plt.figure(figsize=(9, 8), dpi=150)
 im = plt.imshow(
     image_data,
@@ -207,11 +218,13 @@ im = plt.imshow(
     origin="lower",  # Row 0 (Y_START) at bottom, Row N (Y_END) at top
     extent=[0, scan_width_mm, 0, scan_height_mm],
     aspect="equal",
+    vmin=vmin,
+    vmax=vmax,
 )
 cbar = plt.colorbar(im, fraction=0.046, pad=0.04)
-cbar.set_label("Demodulated LFI Reflectance Signal (V)", fontsize=11, fontweight="bold")
+cbar.set_label(f"Demodulated LFI Reflectance (V) [Adaptive {vmin:.2f}V – {vmax:.2f}V]", fontsize=11, fontweight="bold")
 
-plt.title(f"LFI 2D Raster Scan — Coin Target\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step)", fontsize=12, fontweight="bold")
+plt.title(f"LFI 2D Raster Scan — Coin Target\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step | Adaptive Contrast)", fontsize=12, fontweight="bold")
 plt.xlabel("X Position (mm)", fontsize=11, fontweight="bold")
 plt.ylabel("Y Position (mm)", fontsize=11, fontweight="bold")
 plt.grid(False)

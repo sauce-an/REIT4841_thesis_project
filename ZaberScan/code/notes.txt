@@ -144,27 +144,23 @@ TO-DO (NEXT SESSION)
        - Depends on sensor spot size / desired resolution
 
 ================================================================================
-CALIBRATED COIN SCAN POSITIONS (2026-08-20)
+CALIBRATED COIN SCAN POSITIONS (OPTIMIZED)
 ================================================================================
 
 Target: New Taiwan Dollar Coin (20 mm diameter)
-Resolution: ~200 um step (4,199 microsteps/step)
 
-Start Corner (Bottom-Left):
-  Device 4 (Y): 439,860 native
-  Device 6 (X): 933,521 native
-  Device 5 (Z): 104,451 native (Focus - tuned)
+Optimized Scan Window (Tightly cropped with ~0.7 mm margin):
+  X_START_NATIVE = 890,000 (Left boundary)
+  X_END_NATIVE   = 440,000 (Right boundary)
+  Y_START_NATIVE = 475,000 (Bottom boundary)
+  Y_END_NATIVE   = 905,000 (Top boundary)
+  Z_FOCUS_NATIVE = 97,743  (Current focus depth)
 
-End Corner (Top-Right):
-  Device 4 (Y): 973,061 native
-  Device 6 (X): 457,058 native
-  Device 5 (Z): 104,451 native (Focus - tuned)
-
-Scan Area:
-  X Span: 476,463 native (~22.69 mm)
-  Y Span: 533,201 native (~25.39 mm)
-  100 um Grid: 228 x 255 = 58,140 pixels (~100 um step)
-  200 um Grid: 114 x 128 = 14,592 pixels (~200 um step)
+Physical Dimensions:
+  X Span: 450,000 native microsteps = 21.43 mm
+  Y Span: 430,000 native microsteps = 20.48 mm
+  100 um Grid: 215 (X) x 206 (Y) = 44,290 pixels (~24% time saved!)
+  50 um Grid : 430 (X) x 411 (Y) = 176,730 pixels (~24% time saved!)
 
 ================================================================================
 TERMINAL ACCESS NOTE
