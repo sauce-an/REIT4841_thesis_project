@@ -43,11 +43,11 @@ Z_FOCUS_NATIVE = 96412     # Fixed Z focus depth (original 200 um scan position)
 
 # Note: Physical setup is confirmed collision-safe across full travel range.
 
-# Target Step Size (100 um)
-TARGET_STEP_UM = 100.0
-SCAN_LABEL = "scan_2"  # Identifier for multi-round scans (e.g. scan_2, scan_3)
+# Target Step Size (50 um)
+TARGET_STEP_UM = 50.0
+SCAN_LABEL = "scan_1"  # Identifier for multi-round scans (e.g. scan_1, scan_2)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
-STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~2099.74 steps
+STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
 
 # Calculate Grid Points
 NUM_X = int(round(abs(X_END_NATIVE - X_START_NATIVE) / STEP_NATIVE)) + 1
