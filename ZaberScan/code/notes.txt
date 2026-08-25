@@ -173,7 +173,7 @@ SCAN RUN HISTORY & EXPERIMENT LOG
 
 2. 100 µm — scan_1 (2026-08-21):
    - Grid: 228 (X) x 255 (Y) = 58,140 points
-   - Status: SUCCESS
+   - Status: FAILED (Suboptimal focus / poor contrast)
    - Files: coin_scan_100um_scan_1.*
 
 3. 100 µm — scan_2 (2026-08-24):
