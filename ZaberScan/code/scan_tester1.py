@@ -70,20 +70,26 @@ CHOPPER_FREQ_HZ = 800              # Optical chopper frequency on bench (~800 Hz
 PERIODS_PER_POINT = 10             # Original 10 chopper periods averaged per pixel
 DAQ_RATE = 10_000                  # Original 10 kHz DAQ sampling rate
 DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 125 samples (12.5 ms)
+SATURATION_THRESHOLD_V = 9.8       # Voltage rail threshold (samples above this are saturated)
 
 
-def extract_confocal_signal(raw_samples: np.ndarray) -> float:
+def extract_confocal_signal(raw_samples: np.ndarray, saturation_v: float = 9.8) -> tuple[float, bool]:
     """
-    Demodulate AC-coupled chopper-modulated waveform into a confocal LFI signal.
+    Returns (signal, is_saturated). is_saturated=True means every sample
+    in this window was pinned near the amplifier's rail -- the point should
+    be flagged/excluded rather than treated as a real 0V reading.
     Follows Mowla et al. 2018: signal = mean(high state) - mean(low state).
     """
     data = np.asarray(raw_samples)
+    is_saturated = bool(np.all(np.abs(data) > saturation_v) or np.ptp(data) < 1e-4)
+    if is_saturated:
+        return np.nan, True
     threshold = np.median(data)
     high_vals = data[data > threshold]
     low_vals = data[data <= threshold]
     if high_vals.size and low_vals.size:
-        return float(high_vals.mean() - low_vals.mean())
-    return 0.0
+        return float(high_vals.mean() - low_vals.mean()), False
+    return np.nan, True
 
 
 # ==============================================================================
@@ -131,6 +137,7 @@ try:
 
             print(">>> STARTING SERPENTINE RASTER SCAN <<<")
             start_time = time.time()
+            saturated_points_count = 0
 
             for row_idx in range(NUM_Y):
                 row_y_pos = int(y_coords[row_idx])
@@ -149,10 +156,12 @@ try:
 
                     # Acquire DAQ Signal
                     raw_samples = daq_task.read(number_of_samples_per_channel=DAQ_SAMPLES_PER_POINT)
-                    confocal_val = extract_confocal_signal(raw_samples)
+                    confocal_val, is_sat = extract_confocal_signal(raw_samples, saturation_v=SATURATION_THRESHOLD_V)
 
                     # Save to Image Array
                     image_data[row_idx, col_idx] = confocal_val
+                    if is_sat:
+                        saturated_points_count += 1
 
                 # Periodic Checkpoint Saving every 10 rows
                 if (row_idx + 1) % 10 == 0:
@@ -165,10 +174,13 @@ try:
                 est_remaining = max(0.0, est_total - elapsed)
                 pct = (rows_done / NUM_Y) * 100.0
 
+                row_valid = image_data[row_idx][~np.isnan(image_data[row_idx])]
+                row_range_str = f"[{row_valid.min():.3f}V, {row_valid.max():.3f}V]" if row_valid.size else "[ALL SATURATED/NAN]"
+
                 print(f"  Row {rows_done:3d}/{NUM_Y} ({pct:5.1f}%) | "
                       f"Elapsed: {elapsed / 60:.1f}m | "
                       f"Remaining: {est_remaining / 60:.1f}m | "
-                      f"Last Row Signal Range: [{image_data[row_idx].min():.3f}V, {image_data[row_idx].max():.3f}V]")
+                      f"Last Row Signal: {row_range_str} | Sat: {saturated_points_count}")
 
             total_scan_time = time.time() - start_time
             print(f"\n[DONE] Scan finished in {total_scan_time / 60:.2f} minutes!")
@@ -200,21 +212,34 @@ np.savetxt(csv_path, image_data, delimiter=",", fmt="%.6e")
 print(f"  - Saved raw matrix to: {npy_path}")
 print(f"  - Saved CSV data to  : {csv_path}")
 
-# Compute Adaptive Robust Contrast Limits (1% - 99% percentile)
+# Compute Adaptive Robust Contrast Limits (1% - 99% percentile on valid non-NaN pixels)
 # This eliminates outlier specular saturation spikes (10V) and dropouts (0V),
 # stretching the full black-to-white dynamic range across real surface features.
-vmin = float(np.percentile(image_data, 1.0))
-vmax = float(np.percentile(image_data, 99.0))
-if vmax - vmin < 1e-3:
-    vmin, vmax = float(np.min(image_data)), float(np.max(image_data))
-print(f"  - Raw signal range: [{np.min(image_data):.3f} V, {np.max(image_data):.3f} V]")
-print(f"  - Adaptive display range (1%-99%): [{vmin:.3f} V, {vmax:.3f} V]")
+valid_pixels = image_data[~np.isnan(image_data)]
+if valid_pixels.size:
+    vmin = float(np.percentile(valid_pixels, 1.0))
+    vmax = float(np.percentile(valid_pixels, 99.0))
+    if vmax - vmin < 1e-3:
+        vmin, vmax = float(np.min(valid_pixels)), float(np.max(valid_pixels))
+    raw_min_str = f"{np.min(valid_pixels):.3f} V"
+    raw_max_str = f"{np.max(valid_pixels):.3f} V"
+else:
+    vmin, vmax = 0.0, 1.0
+    raw_min_str, raw_max_str = "N/A", "N/A"
 
-# Plot & Save Grayscale Figure with Adaptive Contrast
+sat_pct = (saturated_points_count / (NUM_X * NUM_Y)) * 100.0
+print(f"  - Saturated/Rail points : {saturated_points_count:,} / {NUM_X * NUM_Y:,} ({sat_pct:.2f}%)")
+print(f"  - Valid raw signal range: [{raw_min_str}, {raw_max_str}]")
+print(f"  - Adaptive display range: [{vmin:.3f} V, {vmax:.3f} V]")
+
+# Plot & Save Grayscale Figure with Adaptive Contrast & Saturation Masking
 plt.figure(figsize=(9, 8), dpi=150)
+cmap_custom = plt.cm.gray.copy()
+cmap_custom.set_bad(color="red")  # Highlights saturated rail pixels in red
+
 im = plt.imshow(
     image_data,
-    cmap="gray",
+    cmap=cmap_custom,
     origin="lower",  # Row 0 (Y_START) at bottom, Row N (Y_END) at top
     extent=[0, scan_width_mm, 0, scan_height_mm],
     aspect="equal",
@@ -224,7 +249,7 @@ im = plt.imshow(
 cbar = plt.colorbar(im, fraction=0.046, pad=0.04)
 cbar.set_label(f"Demodulated LFI Reflectance (V) [Adaptive {vmin:.2f}V – {vmax:.2f}V]", fontsize=11, fontweight="bold")
 
-plt.title(f"LFI 2D Raster Scan — Coin Target\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step | Adaptive Contrast)", fontsize=12, fontweight="bold")
+plt.title(f"LFI 2D Raster Scan — Coin Target\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step | Saturation-Filtered)", fontsize=12, fontweight="bold")
 plt.xlabel("X Position (mm)", fontsize=11, fontweight="bold")
 plt.ylabel("Y Position (mm)", fontsize=11, fontweight="bold")
 plt.grid(False)
