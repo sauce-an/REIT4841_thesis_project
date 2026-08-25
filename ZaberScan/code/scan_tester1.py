@@ -45,7 +45,7 @@ Z_FOCUS_NATIVE = 96412     # Fixed Z focus depth (original 200 um scan position)
 
 # Target Step Size (50 um)
 TARGET_STEP_UM = 50.0
-SCAN_LABEL = "scan_1"  # Identifier for multi-round scans (e.g. scan_1, scan_2)
+SCAN_LABEL = "scan_2"  # Identifier for multi-round scans (e.g. scan_1, scan_2)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
 
@@ -67,9 +67,9 @@ scan_height_mm = abs(Y_END_NATIVE - Y_START_NATIVE) * 0.047625 / 1000.0
 # ==============================================================================
 DAQ_CHANNEL = "Dev1/ai7"           # Laser terminal AC-coupled signal (Channel 7)
 CHOPPER_FREQ_HZ = 800              # Optical chopper frequency on bench (~800 Hz)
-PERIODS_PER_POINT = 16             # Chopper periods averaged per pixel (Avg 16 matching oscilloscope)
-DAQ_RATE = 50_000                  # 50 kHz DAQ sampling rate for high waveform resolution
-DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 1,000 samples per pixel (20 ms)
+PERIODS_PER_POINT = 10             # Original 10 chopper periods averaged per pixel
+DAQ_RATE = 10_000                  # Original 10 kHz DAQ sampling rate
+DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 125 samples (12.5 ms)
 
 
 def extract_confocal_signal(raw_samples: np.ndarray) -> float:
