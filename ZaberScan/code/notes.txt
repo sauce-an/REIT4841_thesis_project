@@ -163,15 +163,28 @@ Physical Dimensions:
   50 um Grid : 430 (X) x 411 (Y) = 176,730 pixels (~24% time saved!)
 
 ================================================================================
-TERMINAL ACCESS NOTE
+SCAN RUN HISTORY & EXPERIMENT LOG
 ================================================================================
 
-The AI assistant CANNOT run commands directly due to a PATH/shell issue on
-this machine. Workaround:
+1. 200 µm — scan_1 (2026-08-20):
+   - Grid: 114 (X) x 128 (Y) = 14,592 points
+   - Status: SUCCESS
+   - Files: coin_scan_200um_scan_1.*
 
-  Option A: User runs scripts and pastes output into chat.
-  Option B: User redirects output to a file:
-            python device_check.py 2>&1 | Out-File output.txt
-            Then tells assistant to read output.txt.
+2. 100 µm — scan_1 (2026-08-21):
+   - Grid: 228 (X) x 255 (Y) = 58,140 points
+   - Status: SUCCESS
+   - Files: coin_scan_100um_scan_1.*
+
+3. 100 µm — scan_2 (2026-08-24):
+   - Grid: 215 (X) x 206 (Y) = 44,290 points (Optimized bounds, ~0.7mm margin)
+   - Configuration: Avg 16 (1000 samples @ 50 kHz), Adaptive Contrast Scaling
+   - Duration: 126.12 minutes
+   - Status: SUCCESS (Crisp contrast, saved to coin_scan_100um_scan_2.*)
+
+4. 50 µm — scan_1 (2026-08-24 / 2026-08-25):
+   - Grid: 430 (X) x 411 (Y) = 176,730 points
+   - Configuration: Avg 16, 50 kHz DAQ
+   - Status: FAILED (Resulted in failure)
 
 ================================================================================
