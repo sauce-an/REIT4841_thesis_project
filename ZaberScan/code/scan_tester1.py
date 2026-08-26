@@ -78,7 +78,7 @@ def extract_confocal_signal(raw_samples: np.ndarray, saturation_v: float = 9.8) 
     Returns (signal, is_saturated). is_saturated=True means every sample
     in this window was pinned near the amplifier's rail -- the point should
     be flagged/excluded rather than treated as a real 0V reading.
-    Follows Mowla et al. 2018: signal = mean(high state) - mean(low state).
+    signal = mean(high state) - mean(low state).
     """
     data = np.asarray(raw_samples)
     is_saturated = bool(np.all(np.abs(data) > saturation_v) or np.ptp(data) < 1e-4)

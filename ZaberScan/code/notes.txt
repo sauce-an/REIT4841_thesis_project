@@ -187,4 +187,10 @@ SCAN RUN HISTORY & EXPERIMENT LOG
    - Configuration: Avg 16, 50 kHz DAQ
    - Status: FAILED (Resulted in failure)
 
+5. 50 µm — scan_2 (2026-08-25 / 2026-08-26):
+   - Grid: 430 (X) x 411 (Y) = 176,730 points
+   - Configuration: 10 periods @ 10 kHz, Saturation detection & exclusion (94 / 176,730 = 0.05% saturated)
+   - Duration: 410.29 minutes (~6.84 hrs)
+   - Status: SUCCESS (saved to coin_scan_50um_scan_2.*)
+
 ================================================================================
