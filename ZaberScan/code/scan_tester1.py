@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from zaber_motion import Units, Library
 from zaber_motion.binary import Connection
 import nidaqmx
+from nidaqmx.constants import AcquisitionType
 
 # Setup results directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -45,7 +46,7 @@ Z_FOCUS_NATIVE = 96412     # Fixed Z focus depth (original 200 um scan position)
 
 # Target Step Size (50 um)
 TARGET_STEP_UM = 50.0
-SCAN_LABEL = "scan_2"  # Identifier for multi-round scans (e.g. scan_1, scan_2)
+SCAN_LABEL = "scan_3"  # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
 
@@ -67,9 +68,10 @@ scan_height_mm = abs(Y_END_NATIVE - Y_START_NATIVE) * 0.047625 / 1000.0
 # ==============================================================================
 DAQ_CHANNEL = "Dev1/ai7"           # Laser terminal AC-coupled signal (Channel 7)
 CHOPPER_FREQ_HZ = 800              # Optical chopper frequency on bench (~800 Hz)
-PERIODS_PER_POINT = 10             # Original 10 chopper periods averaged per pixel
-DAQ_RATE = 10_000                  # Original 10 kHz DAQ sampling rate
+PERIODS_PER_POINT = 10             # 10 chopper periods averaged per pixel
+DAQ_RATE = 10_000                  # 10 kHz DAQ sampling rate
 DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 125 samples (12.5 ms)
+DAQ_BUFFER_SIZE = 20_000           # Circular hardware buffer size (2 seconds of data)
 SATURATION_THRESHOLD_V = 9.8       # Voltage rail threshold (samples above this are saturated)
 
 
@@ -102,7 +104,7 @@ print(f"Scan Dimensions : {scan_width_mm:.2f} mm (X) x {scan_height_mm:.2f} mm (
 print(f"Grid Resolution : {NUM_X} (X) x {NUM_Y} (Y) = {NUM_X * NUM_Y:,} total pixels")
 print(f"Actual Step Size: {actual_x_step_um:.1f} um (X) x {actual_y_step_um:.1f} um (Y)")
 print(f"Z Focus Position: {Z_FOCUS_NATIVE} native units")
-print(f"DAQ Channel     : {DAQ_CHANNEL} ({DAQ_SAMPLES_PER_POINT} samples/pixel @ {DAQ_RATE:,} Hz)")
+print(f"DAQ Channel     : {DAQ_CHANNEL} ({DAQ_SAMPLES_PER_POINT} samples/pixel @ {DAQ_RATE:,} Hz, Continuous Stream)")
 print("=" * 70)
 
 # Initialize 2D Image Matrix (Row = Y, Col = X)
@@ -129,58 +131,72 @@ try:
         y_axis.move_absolute(Y_START_NATIVE)
         print("[OK] Stages aligned at start position.\n")
 
-        # Initialize DAQ Task
+        # Initialize DAQ Task in CONTINUOUS mode (eliminates per-point re-arm latency)
         with nidaqmx.Task() as daq_task:
             daq_task.ai_channels.add_ai_voltage_chan(DAQ_CHANNEL)
-            daq_task.timing.cfg_samp_clk_timing(rate=DAQ_RATE, samps_per_chan=DAQ_SAMPLES_PER_POINT)
-            print(f"[OK] DAQ Task initialized on {DAQ_CHANNEL}.\n")
+            daq_task.timing.cfg_samp_clk_timing(
+                rate=DAQ_RATE,
+                sample_mode=AcquisitionType.CONTINUOUS,
+                samps_per_chan=DAQ_BUFFER_SIZE,
+            )
+            daq_task.start()
+            print(f"[OK] DAQ Task started in CONTINUOUS mode on {DAQ_CHANNEL}.\n")
 
             print(">>> STARTING SERPENTINE RASTER SCAN <<<")
             start_time = time.time()
             saturated_points_count = 0
 
-            for row_idx in range(NUM_Y):
-                row_y_pos = int(y_coords[row_idx])
-                y_axis.move_absolute(row_y_pos)
+            try:
+                for row_idx in range(NUM_Y):
+                    row_y_pos = int(y_coords[row_idx])
+                    y_axis.move_absolute(row_y_pos)
 
-                # Serpentine direction
-                is_even_row = (row_idx % 2 == 0)
-                col_indices = range(NUM_X) if is_even_row else range(NUM_X - 1, -1, -1)
+                    # Serpentine direction
+                    is_even_row = (row_idx % 2 == 0)
+                    col_indices = range(NUM_X) if is_even_row else range(NUM_X - 1, -1, -1)
 
-                for col_idx in col_indices:
-                    col_x_pos = int(x_coords[col_idx])
-                    x_axis.move_absolute(col_x_pos)
+                    for col_idx in col_indices:
+                        col_x_pos = int(x_coords[col_idx])
+                        x_axis.move_absolute(col_x_pos)
 
-                    # Stage settling delay (optimized for 50 um microsteps)
-                    time.sleep(0.008)
+                        # Stage settling delay (optimized for microsteps)
+                        time.sleep(0.008)
 
-                    # Acquire DAQ Signal
-                    raw_samples = daq_task.read(number_of_samples_per_channel=DAQ_SAMPLES_PER_POINT)
-                    confocal_val, is_sat = extract_confocal_signal(raw_samples, saturation_v=SATURATION_THRESHOLD_V)
+                        # Drain stale motion samples accumulated during stage transit
+                        avail = daq_task.in_stream.avail_samp_per_chan
+                        if avail > 0:
+                            daq_task.in_stream.read(number_of_samples_per_channel=avail)
 
-                    # Save to Image Array
-                    image_data[row_idx, col_idx] = confocal_val
-                    if is_sat:
-                        saturated_points_count += 1
+                        # Acquire fresh settled samples (blocks for exactly 12.5 ms)
+                        raw_samples = daq_task.read(number_of_samples_per_channel=DAQ_SAMPLES_PER_POINT)
+                        confocal_val, is_sat = extract_confocal_signal(raw_samples, saturation_v=SATURATION_THRESHOLD_V)
 
-                # Periodic Checkpoint Saving every 10 rows
-                if (row_idx + 1) % 10 == 0:
-                    np.save(os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}_checkpoint.npy"), image_data)
+                        # Save to Image Array
+                        image_data[row_idx, col_idx] = confocal_val
+                        if is_sat:
+                            saturated_points_count += 1
 
-                # Progress Report after each row
-                elapsed = time.time() - start_time
-                rows_done = row_idx + 1
-                est_total = (elapsed / rows_done) * NUM_Y
-                est_remaining = max(0.0, est_total - elapsed)
-                pct = (rows_done / NUM_Y) * 100.0
+                    # Periodic Checkpoint Saving every 10 rows
+                    if (row_idx + 1) % 10 == 0:
+                        np.save(os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}_checkpoint.npy"), image_data)
 
-                row_valid = image_data[row_idx][~np.isnan(image_data[row_idx])]
-                row_range_str = f"[{row_valid.min():.3f}V, {row_valid.max():.3f}V]" if row_valid.size else "[ALL SATURATED/NAN]"
+                    # Progress Report after each row
+                    elapsed = time.time() - start_time
+                    rows_done = row_idx + 1
+                    est_total = (elapsed / rows_done) * NUM_Y
+                    est_remaining = max(0.0, est_total - elapsed)
+                    pct = (rows_done / NUM_Y) * 100.0
 
-                print(f"  Row {rows_done:3d}/{NUM_Y} ({pct:5.1f}%) | "
-                      f"Elapsed: {elapsed / 60:.1f}m | "
-                      f"Remaining: {est_remaining / 60:.1f}m | "
-                      f"Last Row Signal: {row_range_str} | Sat: {saturated_points_count}")
+                    row_valid = image_data[row_idx][~np.isnan(image_data[row_idx])]
+                    row_range_str = f"[{row_valid.min():.3f}V, {row_valid.max():.3f}V]" if row_valid.size else "[ALL SATURATED/NAN]"
+
+                    print(f"  Row {rows_done:3d}/{NUM_Y} ({pct:5.1f}%) | "
+                          f"Elapsed: {elapsed / 60:.1f}m | "
+                          f"Remaining: {est_remaining / 60:.1f}m | "
+                          f"Last Row Signal: {row_range_str} | Sat: {saturated_points_count}")
+
+            finally:
+                daq_task.stop()
 
             total_scan_time = time.time() - start_time
             print(f"\n[DONE] Scan finished in {total_scan_time / 60:.2f} minutes!")
