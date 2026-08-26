@@ -191,6 +191,8 @@ SCAN RUN HISTORY & EXPERIMENT LOG
    - Grid: 430 (X) x 411 (Y) = 176,730 points
    - Configuration: 10 periods @ 10 kHz, Saturation detection & exclusion (94 / 176,730 = 0.05% saturated)
    - Duration: 410.29 minutes (~6.84 hrs)
-   - Status: SUCCESS (saved to coin_scan_50um_scan_2.*)
+   - Status: PARTIALLY SUCCESSFUL / SUBOPTIMAL
+   - Observations: Significant improvement over scan_1 with clear coin features, but not fully successful due to observable interference fringes. Fringes become noticeable around the middle of the scan (~row 200+) and are most prominent in the final 1/3 of the scan (~row 270-411). Likely driven by sub-micron thermal/optical path drift and mechanical settling over the ~7-hour duration.
+   - Files: coin_scan_50um_scan_2.*
 
 ================================================================================
