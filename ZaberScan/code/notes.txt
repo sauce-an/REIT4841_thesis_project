@@ -209,8 +209,21 @@ SCAN RUN HISTORY & EXPERIMENT LOG
      * Demodulation: AC RMS method (2 * std)
      * Saturation handling: Rail saturation (9.8V) & flatline detection preserved
    - Status: FAILED
-   - Reason: Image grayed out a lot, displaying consistent flat gray across the whole image without good contrast.
+   - Diagnostic Findings: Image grayed out and washed out with severe contrast loss. Quantitative analysis shows dynamic range collapsed from 2.30V (in High-Low) down to 0.71V (a ~69% reduction). Caused by real non-ideal trapezoidal chopper transitions near 0V suppressing the RMS variance.
    - Files: coin_scan_50um_scan_3.*
+
+================================================================================
+ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
+================================================================================
+
+1. demod_comparison_highlow_vs_acrms.png:
+   - Script: ZaberScan/code/plot_demod_comparison.py
+   - Compares: 50 µm scan_2 (Mowla High-Low) vs 50 µm scan_3 (AC RMS)
+   - Content: 4-panel comparison featuring side-by-side 2D reconstructions, global voltage probability density (histograms), and 1D cross-sectional slice profile at Y = 5.0 mm.
+
+2. 50um_scan1_vs_scan2_row-drift.png:
+   - Compares: 50 µm scan_1 vs 50 µm scan_2
+   - Content: Row-by-row signal drift, fringe emergence, and settling comparison across the ~7-hour scans.
 
 ================================================================================
 
