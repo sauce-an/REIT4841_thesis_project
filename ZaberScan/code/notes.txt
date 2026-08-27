@@ -200,14 +200,18 @@ SCAN RUN HISTORY & EXPERIMENT LOG
    - Status: FAILED / DISCARDED
    - Findings: Continuous acquisition method did not work reliably in practice and produced degraded results. Reverted back to the robust, per-point finite acquisition architecture.
 
-7. 50 µm — scan_3 (2026-08-26 — IN PROGRESS / UPCOMING):
+7. 50 µm — scan_3 (2026-08-26 / 2026-08-27):
+   - Grid: 430 (X) x 411 (Y) = 176,730 points
    - Configuration:
-     * Optical Chopper: Increased to 1000 Hz
+     * Optical Chopper: 1000 Hz
      * DAQ Rate: 20 kHz (20 samples per chopper period)
      * Averaging: 16 chopper periods (320 samples / 16.0 ms per point)
-     * Demodulation: AC RMS method (std dev removing DC baseline, V_pp = 2 * V_rms)
+     * Demodulation: AC RMS method (2 * std)
      * Saturation handling: Rail saturation (9.8V) & flatline detection preserved
-   - Expected Files: coin_scan_50um_scan_3.*
+   - Status: FAILED
+   - Reason: Image grayed out a lot, displaying consistent flat gray across the whole image without good contrast.
+   - Files: coin_scan_50um_scan_3.*
 
 ================================================================================
+
 
