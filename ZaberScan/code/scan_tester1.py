@@ -255,7 +255,6 @@ plt.grid(False)
 plt.tight_layout()
 
 plt.savefig(png_path, dpi=300)
+plt.close()
 print(f"  - Saved image figure : {png_path}")
-
-print("\nOpening image preview window...")
-plt.show()
+print("\n[SUCCESS] Image processing and saving complete.")
