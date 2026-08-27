@@ -217,7 +217,7 @@ ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
 ================================================================================
 
 1. demod_comparison_highlow_vs_acrms.png:
-   - Script: ZaberScan/code/plot_demod_comparison.py
+   - Script: ZaberScan/results/analyzed/plot_demod_comparison.py
    - Compares: 50 µm scan_2 (Mowla High-Low) vs 50 µm scan_3 (AC RMS)
    - Content: 4-panel comparison featuring side-by-side 2D reconstructions, global voltage probability density (histograms), and 1D cross-sectional slice profile at Y = 5.0 mm.
 
