@@ -45,7 +45,7 @@ Z_FOCUS_NATIVE = 96412     # Fixed Z focus depth (original 200 um scan position)
 
 # Target Step Size (50 um)
 TARGET_STEP_UM = 50.0
-SCAN_LABEL = "scan_3"  # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3)
+SCAN_LABEL = "scan_4"  # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3, scan_4)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
 
@@ -63,7 +63,7 @@ scan_width_mm = abs(X_END_NATIVE - X_START_NATIVE) * 0.047625 / 1000.0
 scan_height_mm = abs(Y_END_NATIVE - Y_START_NATIVE) * 0.047625 / 1000.0
 
 # ==============================================================================
-# 2. DAQ ACQUISITION & DEMODULATION SETTINGS (1000 Hz Chopper + RMS Demodulation)
+# 2. DAQ ACQUISITION & DEMODULATION SETTINGS (High-Low Median Split)
 # ==============================================================================
 DAQ_CHANNEL = "Dev1/ai7"           # Laser terminal AC-coupled signal (Channel 7)
 CHOPPER_FREQ_HZ = 1000             # Optical chopper frequency (1000 Hz)
@@ -75,32 +75,33 @@ SATURATION_THRESHOLD_V = 9.8       # Voltage rail threshold (samples above this 
 
 def extract_confocal_signal(raw_samples: np.ndarray, saturation_v: float = 9.8) -> tuple[float, bool]:
     """
-    Extracts LFI signal amplitude using AC RMS (standard deviation).
+    Demodulate AC-coupled chopper-modulated waveform into a confocal LFI signal.
+    Follows Mowla et al. 2018: signal = mean(high state) - mean(low state).
     Returns (signal, is_saturated).
-    For a 50% duty-cycle square wave: V_pp = 2 * V_rms.
     """
     data = np.asarray(raw_samples)
     is_saturated = bool(np.all(np.abs(data) > saturation_v) or np.ptp(data) < 1e-4)
     if is_saturated:
         return np.nan, True
-
-    # AC RMS (standard deviation removes any residual DC offset and averages noise)
-    v_rms = float(np.std(data))
-    v_pp = 2.0 * v_rms
-    return v_pp, False
+    threshold = np.median(data)
+    high_vals = data[data > threshold]
+    low_vals = data[data <= threshold]
+    if high_vals.size and low_vals.size:
+        return float(high_vals.mean() - low_vals.mean()), False
+    return np.nan, True
 
 
 # ==============================================================================
 # 3. MAIN SCANNING ROUTINE
 # ==============================================================================
 print("=" * 70)
-print(f"ZABER RASTER SCANNING & LFI IMAGING — {int(TARGET_STEP_UM)} um RESOLUTION (RMS DEMOD)")
+print(f"ZABER RASTER SCANNING & LFI IMAGING — {int(TARGET_STEP_UM)} um RESOLUTION (HIGH-LOW DEMOD)")
 print("=" * 70)
 print(f"Scan Dimensions : {scan_width_mm:.2f} mm (X) x {scan_height_mm:.2f} mm (Y)")
 print(f"Grid Resolution : {NUM_X} (X) x {NUM_Y} (Y) = {NUM_X * NUM_Y:,} total pixels")
 print(f"Actual Step Size: {actual_x_step_um:.1f} um (X) x {actual_y_step_um:.1f} um (Y)")
 print(f"Z Focus Position: {Z_FOCUS_NATIVE} native units")
-print(f"DAQ Channel     : {DAQ_CHANNEL} ({DAQ_SAMPLES_PER_POINT} samples/pixel @ {DAQ_RATE:,} Hz | 1000 Hz Chopper, RMS)")
+print(f"DAQ Channel     : {DAQ_CHANNEL} ({DAQ_SAMPLES_PER_POINT} samples/pixel @ {DAQ_RATE:,} Hz | 1000 Hz Chopper, High-Low)")
 print("=" * 70)
 
 # Initialize 2D Image Matrix (Row = Y, Col = X)
@@ -247,7 +248,7 @@ im = plt.imshow(
 cbar = plt.colorbar(im, fraction=0.046, pad=0.04)
 cbar.set_label(f"Demodulated LFI Reflectance (V) [Adaptive {vmin:.2f}V – {vmax:.2f}V]", fontsize=11, fontweight="bold")
 
-plt.title(f"LFI 2D Raster Scan — Coin Target\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step | 1000 Hz Chopper, RMS Demod)", fontsize=12, fontweight="bold")
+plt.title(f"LFI 2D Raster Scan — Coin Target\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step | High-Low Demod)", fontsize=12, fontweight="bold")
 plt.xlabel("X Position (mm)", fontsize=11, fontweight="bold")
 plt.ylabel("Y Position (mm)", fontsize=11, fontweight="bold")
 plt.grid(False)
