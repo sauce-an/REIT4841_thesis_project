@@ -14,6 +14,12 @@ from zaber_motion import Units, Library
 from zaber_motion.binary import Connection
 import nidaqmx
 
+# Ensure unbuffered real-time stdout updates in PowerShell/terminal
+try:
+    sys.stdout.reconfigure(line_buffering=True, write_through=True)
+except Exception:
+    pass
+
 # Setup results directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -39,15 +45,15 @@ X_START_NATIVE = 890000    # Left boundary of coin window (~21.4 mm span)
 X_END_NATIVE   = 440000    # Right boundary of coin window
 Y_START_NATIVE = 475000    # Bottom boundary of coin window (~20.5 mm span)
 Y_END_NATIVE   = 905000    # Top boundary of coin window
-Z_FOCUS_NATIVE = 96412     # Fixed Z focus depth (original 200 um scan position)
+Z_FOCUS_NATIVE = 108498    # Current Z focus depth (~5.167 mm)
 
 # Note: Physical setup is confirmed collision-safe across full travel range.
 
-# Target Step Size (50 um)
-TARGET_STEP_UM = 50.0
-SCAN_LABEL = "scan_4"  # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3, scan_4)
+# Target Step Size (200 um)
+TARGET_STEP_UM = 200.0
+SCAN_LABEL = "scan_2"  # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
-STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
+STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~4199.47 steps
 
 # Calculate Grid Points
 NUM_X = int(round(abs(X_END_NATIVE - X_START_NATIVE) / STEP_NATIVE)) + 1
@@ -179,7 +185,7 @@ try:
                 print(f"  Row {rows_done:3d}/{NUM_Y} ({pct:5.1f}%) | "
                       f"Elapsed: {elapsed / 60:.1f}m | "
                       f"Remaining: {est_remaining / 60:.1f}m | "
-                      f"Last Row Signal: {row_range_str} | Sat: {saturated_points_count}")
+                      f"Last Row Signal: {row_range_str} | Sat: {saturated_points_count}", flush=True)
 
             total_scan_time = time.time() - start_time
             print(f"\n[DONE] Scan finished in {total_scan_time / 60:.2f} minutes!")

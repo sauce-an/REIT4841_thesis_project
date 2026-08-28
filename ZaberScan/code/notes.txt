@@ -212,7 +212,23 @@ SCAN RUN HISTORY & EXPERIMENT LOG
    - Diagnostic Findings: Image grayed out and washed out with severe contrast loss. Quantitative analysis shows dynamic range collapsed from 2.30V (in High-Low) down to 0.71V (a ~69% reduction). Caused by real non-ideal trapezoidal chopper transitions near 0V suppressing the RMS variance.
    - Files: coin_scan_50um_scan_3.*
 
+8. 50 µm — scan_4 (2026-08-27 / 2026-08-28):
+   - Grid: 430 (X) x 411 (Y) = 176,730 points
+   - Configuration: High-Low Median-Split Demodulation, 1000 Hz Chopper, 20 kHz DAQ, 16 periods avg
+   - Duration: 421.57 minutes (~7.03 hrs)
+   - Status: COMPLETED
+   - Files: coin_scan_50um_scan_4.*
+
+9. 200 µm — scan_2 (2026-08-28):
+   - Grid: 108 (X) x 103 (Y) = 11,124 points
+   - Focus: Z = 108,498 native units (~5.167 mm)
+   - Configuration: High-Low Median-Split Demodulation, 1000 Hz Chopper, 20 kHz DAQ, 16 periods avg
+   - Status: SUCCESSFUL
+   - Notes: Made adjustments in the linear polarizer by slightly weakening the feedback signal to prevent saturation and enhance contrast across coin relief features (1%–99% span: 2.47V to 7.27V, ΔV = 4.80V, 1 saturated point).
+   - Files: coin_scan_200um_scan_2.*
+
 ================================================================================
+
 ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
 ================================================================================
 
