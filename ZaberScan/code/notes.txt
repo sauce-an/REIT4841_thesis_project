@@ -227,8 +227,14 @@ SCAN RUN HISTORY & EXPERIMENT LOG
    - Notes: Made adjustments in the linear polarizer by slightly weakening the feedback signal to prevent saturation and enhance contrast across coin relief features (1%–99% span: 2.47V to 7.27V, ΔV = 4.80V, 1 saturated point).
    - Files: coin_scan_200um_scan_2.*
 
-================================================================================
+10. 50 µm — scan_5 (2026-08-28 / 2026-08-29):
+    - Grid: 430 (X) x 411 (Y) = 176,730 points
+    - Configuration: High-Low Median-Split Demodulation, 1000 Hz Chopper, 20 kHz DAQ, 16 periods avg
+    - Status: SUCCESSFUL / HIGH CONTRAST
+    - Findings: High dynamic range (5th-95th percentile: 2.92V to 5.28V, ΔV = 2.36V), only 134 saturated rail points (0.08%).
+    - Files: coin_scan_50um_scan_5.*
 
+================================================================================
 ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
 ================================================================================
 
