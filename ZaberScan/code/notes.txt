@@ -252,6 +252,21 @@ SCAN RUN HISTORY & EXPERIMENT LOG
       * Action: Reverted scan_tester1.py back to the original Mowla High-Low Median Split method as the standard baseline.
     - Files: coin_scan_200um_scan_3.*
 
+13. 200 µm — scan_4 (2026-08-31):
+    - Grid: 108 (X) x 103 (Y) = 11,124 points
+    - Focus: Z = 108,498 native units (~5.167 mm)
+    - Configuration: High-Low Median-Split Demodulation, 1000 Hz Chopper, 20 kHz DAQ, 16 periods avg (Synchronous Live 3-Subplot Oscilloscope GUI)
+    - Duration: 59.16 minutes
+    - Status: SUCCESSFUL / HIGH CONTRAST
+    - Saturated/Rail points: 78 / 11,124 (0.70%)
+    - Valid raw signal range: [0.763 V, 10.419 V]
+    - Adaptive display range: [0.847 V, 10.053 V]
+    - Key Findings:
+      * Validated synchronous live 3-subplot waveform display (Laser ai7, Chopper ai15, Demodulation breakdown) operating smoothly during 2D serpentine scanning without degrading data quality.
+      * Pristine Physical Contrast: Background diffuse scatter baseline dropped to ~0.8 V while coin features reached 9.0–10.4 V (over 8:1 contrast ratio).
+      * Proves that physical 0V DC centering and linear polarizer feedback attenuation linearized the laser response and unlocked the full dynamic range.
+    - Files: coin_scan_200um_scan_4.*
+
 ================================================================================
 ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
 ================================================================================
