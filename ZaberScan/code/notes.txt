@@ -234,6 +234,24 @@ SCAN RUN HISTORY & EXPERIMENT LOG
     - Findings: High dynamic range (5th-95th percentile: 2.92V to 5.28V, ΔV = 2.36V), only 134 saturated rail points (0.08%).
     - Files: coin_scan_50um_scan_5.*
 
+11. 100 µm — scan_3 (2026-08-28 / 2026-08-29):
+    - Grid: 215 (X) x 206 (Y) = 44,290 points
+    - Configuration: High-Low Median-Split Demodulation, 1000 Hz Chopper, 20 kHz DAQ, 16 periods avg
+    - Status: SUCCESSFUL (0 saturated points, clean relief reconstruction)
+    - Files: coin_scan_100um_scan_3.*
+
+12. 200 µm — scan_3 (2026-08-31):
+    - Grid: 108 (X) x 103 (Y) = 11,124 points
+    - Configuration: AC RMS Demodulation (2 * std)
+    - Duration: 37.44 minutes
+    - Status: COMPLETED / DEMODULATION BENCHMARK
+    - Key Findings & Conclusions:
+      * Re-tested AC RMS demodulation on 200 µm grid after 0V DC centering and polarizer adjustment.
+      * Conclusive Proof: Directly proves that the demodulation algorithm itself is NOT the cause of the higher feedback background than the coin issue (the background signal level persists across both methods due to optical retro-reflection / physical scatter).
+      * Dynamic Range: Confirms that the AC RMS method consistently leads to a narrower dynamic range across the scene compared to the High-Low median-split method.
+      * Action: Reverted scan_tester1.py back to the original Mowla High-Low Median Split method as the standard baseline.
+    - Files: coin_scan_200um_scan_3.*
+
 ================================================================================
 ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
 ================================================================================
