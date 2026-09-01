@@ -191,8 +191,8 @@ def run_single_scan(target_step_um: float, scan_label: str) -> dict:
 
     valid_pixels = image_data[~np.isnan(image_data)]
     if valid_pixels.size:
-        vmin = float(np.percentile(valid_pixels, 1.0))
-        vmax = float(np.percentile(valid_pixels, 99.0))
+        vmin = float(np.percentile(valid_pixels, 0.5))
+        vmax = float(np.percentile(valid_pixels, 95.5))
         if vmax - vmin < 1e-3:
             vmin, vmax = float(np.min(valid_pixels)), float(np.max(valid_pixels))
         raw_min_str = f"{np.min(valid_pixels):.3f} V"
@@ -249,7 +249,7 @@ def run_single_scan(target_step_um: float, scan_label: str) -> dict:
     }
 
 
-def append_notes_and_push(results_100um: dict, results_50um: dict):
+def append_notes_and_push(results_50um: dict, results_100um: dict):
     """Log findings into notes.txt and execute git push."""
     print("\n" + "=" * 75)
     print("UPDATING NOTES.TXT & PUSHING TO GITHUB")
@@ -257,27 +257,27 @@ def append_notes_and_push(results_100um: dict, results_50um: dict):
 
     timestamp_str = time.strftime("%Y-%m-%d")
     notes_entry = f"""
-14. 100 µm — {results_100um['label']} ({timestamp_str}):
-    - Grid: {results_100um['num_x']} (X) x {results_100um['num_y']} (Y) = {results_100um['total_pixels']:,} points
-    - Focus: Z = {Z_FOCUS_NATIVE} native units (~{Z_FOCUS_NATIVE*0.047625/1000.0:.3f} mm)
-    - Configuration: High-Low Median-Split Demodulation, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms)
-    - Duration: {results_100um['duration_min']:.2f} minutes
-    - Status: SUCCESSFUL
-    - Saturated/Rail points: {results_100um['sat_count']:,} / {results_100um['total_pixels']:,} ({results_100um['sat_pct']:.2f}%)
-    - Valid raw signal range: [{results_100um['raw_min']}, {results_100um['raw_max']}]
-    - Adaptive display range: [{results_100um['vmin']:.3f} V, {results_100um['vmax']:.3f} V]
-    - Files: coin_scan_100um_{results_100um['label']}.*
-
-15. 50 µm — {results_50um['label']} ({timestamp_str}):
+16. 50 µm — {results_50um['label']} ({timestamp_str}):
     - Grid: {results_50um['num_x']} (X) x {results_50um['num_y']} (Y) = {results_50um['total_pixels']:,} points
     - Focus: Z = {Z_FOCUS_NATIVE} native units (~{Z_FOCUS_NATIVE*0.047625/1000.0:.3f} mm)
-    - Configuration: High-Low Median-Split Demodulation, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms)
+    - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.5%–95.5% Colormap Percentiles
     - Duration: {results_50um['duration_min']:.2f} minutes
     - Status: SUCCESSFUL
     - Saturated/Rail points: {results_50um['sat_count']:,} / {results_50um['total_pixels']:,} ({results_50um['sat_pct']:.2f}%)
     - Valid raw signal range: [{results_50um['raw_min']}, {results_50um['raw_max']}]
     - Adaptive display range: [{results_50um['vmin']:.3f} V, {results_50um['vmax']:.3f} V]
     - Files: coin_scan_50um_{results_50um['label']}.*
+
+17. 100 µm — {results_100um['label']} ({timestamp_str}):
+    - Grid: {results_100um['num_x']} (X) x {results_100um['num_y']} (Y) = {results_100um['total_pixels']:,} points
+    - Focus: Z = {Z_FOCUS_NATIVE} native units (~{Z_FOCUS_NATIVE*0.047625/1000.0:.3f} mm)
+    - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.5%–95.5% Colormap Percentiles
+    - Duration: {results_100um['duration_min']:.2f} minutes
+    - Status: SUCCESSFUL
+    - Saturated/Rail points: {results_100um['sat_count']:,} / {results_100um['total_pixels']:,} ({results_100um['sat_pct']:.2f}%)
+    - Valid raw signal range: [{results_100um['raw_min']}, {results_100um['raw_max']}]
+    - Adaptive display range: [{results_100um['vmin']:.3f} V, {results_100um['vmax']:.3f} V]
+    - Files: coin_scan_100um_{results_100um['label']}.*
 """
     try:
         with open(NOTES_PATH, "r", encoding="utf-8") as f:
@@ -292,7 +292,7 @@ def append_notes_and_push(results_100um: dict, results_50um: dict):
 
         with open(NOTES_PATH, "w", encoding="utf-8") as f:
             f.write(updated_notes)
-        print("[OK] notes.txt updated with scan 14 (100 µm) and scan 15 (50 µm) metrics.", flush=True)
+        print("[OK] notes.txt updated with scan 16 (50 µm) and scan 17 (100 µm) metrics.", flush=True)
     except Exception as e:
         print(f"[WARNING] Could not update notes.txt: {e}", flush=True)
 
@@ -301,12 +301,12 @@ def append_notes_and_push(results_100um: dict, results_50um: dict):
         env = os.environ.copy()
         git_add_cmd = [
             "git", "add",
-            os.path.join(RESULTS_DIR, f"coin_scan_100um_{results_100um['label']}.*"),
             os.path.join(RESULTS_DIR, f"coin_scan_50um_{results_50um['label']}.*"),
+            os.path.join(RESULTS_DIR, f"coin_scan_100um_{results_100um['label']}.*"),
             NOTES_PATH,
         ]
         subprocess.run(git_add_cmd, cwd=PROJECT_DIR, check=True, env=env)
-        commit_msg = f"Add 100um ({results_100um['label']}) and 50um ({results_50um['label']}) scan results with Z={Z_FOCUS_NATIVE}"
+        commit_msg = f"Add 50um ({results_50um['label']}) and 100um ({results_100um['label']}) scan results with Software AC Coupling and 0.5-95.5% scaling"
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=PROJECT_DIR, check=True, env=env)
         subprocess.run(["git", "push", "origin", "main"], cwd=PROJECT_DIR, check=True, env=env)
         print("[SUCCESS] All results and notes successfully committed and pushed to GitHub!", flush=True)
@@ -316,19 +316,19 @@ def append_notes_and_push(results_100um: dict, results_50um: dict):
 
 if __name__ == "__main__":
     print("=" * 75)
-    print("SEQUENTIAL BATCH SCAN RUNNER: 100 µm -> 50 µm -> Git Push")
+    print("SEQUENTIAL BATCH SCAN RUNNER: 50 µm (scan_7) -> 100 µm (scan_5) -> Git Push")
     print(f"Focus Position: Z = {Z_FOCUS_NATIVE} native units (~4.911 mm)")
     print(f"Periods / Point: {PERIODS_PER_POINT} (640 samples @ 20 kHz / 32.0 ms)")
     print("=" * 75, flush=True)
 
-    # Phase 1: 100 um scan
-    res_100 = run_single_scan(target_step_um=100.0, scan_label="scan_4")
+    # Phase 1: 50 um scan (scan_7)
+    res_50 = run_single_scan(target_step_um=50.0, scan_label="scan_7")
 
-    # Phase 2: 50 um scan
-    res_50 = run_single_scan(target_step_um=50.0, scan_label="scan_6")
+    # Phase 2: 100 um scan (scan_5)
+    res_100 = run_single_scan(target_step_um=100.0, scan_label="scan_5")
 
     # Phase 3: Update notes & push
-    append_notes_and_push(res_100, res_50)
+    append_notes_and_push(res_50, res_100)
 
     print("\n" + "=" * 75)
     print("ALL BATCH TASKS COMPLETED SUCCESSFULLY!")

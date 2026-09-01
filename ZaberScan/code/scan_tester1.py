@@ -366,8 +366,8 @@ print(f"  - Saved CSV data to  : {csv_path}")
 
 valid_pixels = image_data[~np.isnan(image_data)]
 if valid_pixels.size:
-    vmin = float(np.percentile(valid_pixels, 1.0))
-    vmax = float(np.percentile(valid_pixels, 99.0))
+    vmin = float(np.percentile(valid_pixels, 0.5))
+    vmax = float(np.percentile(valid_pixels, 95.5))
     if vmax - vmin < 1e-3:
         vmin, vmax = float(np.min(valid_pixels)), float(np.max(valid_pixels))
     raw_min_str = f"{np.min(valid_pixels):.3f} V"

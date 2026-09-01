@@ -44,7 +44,7 @@ AUTO_DETECT_CHOPPER_FREQ = True            # Auto-measure chopper frequency from
 
 # --- Subplot 3: Per-Pixel Acquisition Settings (Matching scan_tester1.py) ---
 SCAN_DAQ_RATE = 20_000                     # 20 kHz sampling rate in scanning script
-SCAN_PERIODS_PER_POINT = 16                # 32 chopper periods per pixel (32.0 ms)
+SCAN_PERIODS_PER_POINT = 32                # 32 chopper periods per pixel (32.0 ms)
 SCAN_SAMPLES_PER_POINT = int(SCAN_DAQ_RATE * SCAN_PERIODS_PER_POINT / EST_CHOPPER_FREQ)  # 640 samples (32.0 ms)
 SCAN_DURATION_SEC = SCAN_PERIODS_PER_POINT / EST_CHOPPER_FREQ                             # 0.032 s (32.0 ms)
 RAW_SAMPLES_IN_PIXEL = int(DAQ_RATE * SCAN_DURATION_SEC)                                  # 3200 samples @ 100 kHz
