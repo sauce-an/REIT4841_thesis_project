@@ -44,10 +44,10 @@ AUTO_DETECT_CHOPPER_FREQ = True            # Auto-measure chopper frequency from
 
 # --- Subplot 3: Per-Pixel Acquisition Settings (Matching scan_tester1.py) ---
 SCAN_DAQ_RATE = 20_000                     # 20 kHz sampling rate in scanning script
-SCAN_PERIODS_PER_POINT = 16                # 16 chopper periods per pixel
-SCAN_SAMPLES_PER_POINT = int(SCAN_DAQ_RATE * SCAN_PERIODS_PER_POINT / EST_CHOPPER_FREQ)  # 320 samples (16.0 ms)
-SCAN_DURATION_SEC = SCAN_PERIODS_PER_POINT / EST_CHOPPER_FREQ                             # 0.016 s (16.0 ms)
-RAW_SAMPLES_IN_PIXEL = int(DAQ_RATE * SCAN_DURATION_SEC)                                  # 1600 samples @ 100 kHz
+SCAN_PERIODS_PER_POINT = 16                # 32 chopper periods per pixel (32.0 ms)
+SCAN_SAMPLES_PER_POINT = int(SCAN_DAQ_RATE * SCAN_PERIODS_PER_POINT / EST_CHOPPER_FREQ)  # 640 samples (32.0 ms)
+SCAN_DURATION_SEC = SCAN_PERIODS_PER_POINT / EST_CHOPPER_FREQ                             # 0.032 s (32.0 ms)
+RAW_SAMPLES_IN_PIXEL = int(DAQ_RATE * SCAN_DURATION_SEC)                                  # 3200 samples @ 100 kHz
 
 # Buffer & Window Setup
 CHUNK_SIZE = int(DAQ_RATE * DISPLAY_PERIODS / EST_CHOPPER_FREQ)  # 1000 samples @ 100 kHz (10.0 ms)
@@ -122,20 +122,22 @@ ax_chop.grid(True, linestyle="--", alpha=0.6)
 ax_chop.legend(loc="upper right", framealpha=0.9, fontsize=8.5)
 ax_chop.set_title("(2) Optical Chopper Reference Signal | Initializing...", fontsize=11, fontweight="bold", color="#b45f06")
 
-# --- SUBPLOT 3: Single-Pixel Acquisition & Demodulation Emulator (320 samples @ 20 kHz) ---
-line_pixel_high, = ax_pixel.plot([], [], 'o', color="#2ca02c", markersize=3.5, label="High State Samples (> Median)")
-line_pixel_low,  = ax_pixel.plot([], [], 'o', color="#9467bd", markersize=3.5, label="Low State Samples (<= Median)")
-line_pixel_wave, = ax_pixel.plot(t_pixel_ms, np.zeros(SCAN_SAMPLES_PER_POINT), color="#7f7f7f", lw=1.0, alpha=0.6)
-line_pixel_hmean = ax_pixel.axhline(0.0, color="#2ca02c", linestyle="-", lw=1.5, label="High Plateau Mean")
-line_pixel_lmean = ax_pixel.axhline(0.0, color="#9467bd", linestyle="-", lw=1.5, label="Low Plateau Mean")
-line_pixel_med   = ax_pixel.axhline(0.0, color="#d62728", linestyle="--", lw=1.2, label="Median Threshold")
+# --- SUBPLOT 3: Single-Period Phase-Averaged Waveform (Averaged across all 32 cycles) ---
+SAMPLES_PER_CYCLE = int(SCAN_DAQ_RATE / EST_CHOPPER_FREQ)  # 20 samples per 1 ms cycle
+t_cycle_ms = np.arange(SAMPLES_PER_CYCLE) / SCAN_DAQ_RATE * 1000  # 0.0 to 0.95 ms
 
-ax_pixel.set_xlabel("Pixel Acquisition Time (ms) — [16 Chopper Cycles / 320 Samples @ 20 kHz]", fontsize=11, fontweight="bold")
-ax_pixel.set_ylabel("Sampled Voltage (V)", fontsize=10.5, fontweight="bold")
+line_pixel_avg,   = ax_pixel.plot(t_cycle_ms, np.zeros(SAMPLES_PER_CYCLE), '-o', color="#1b5e20", lw=2.4, markersize=5.5, label=f"Averaged Cycle ({SCAN_PERIODS_PER_POINT}× Ensemble Avg)")
+line_pixel_hmean  = ax_pixel.axhline(0.0, color="#2ca02c", linestyle="-", lw=1.6, label="High Plateau Mean")
+line_pixel_lmean  = ax_pixel.axhline(0.0, color="#9467bd", linestyle="-", lw=1.6, label="Low Plateau Mean")
+line_pixel_med    = ax_pixel.axhline(0.0, color="#d62728", linestyle="--", lw=1.2, label="Median Threshold")
+
+ax_pixel.set_xlabel("Chopper Cycle Phase Time (ms) — [1.0 ms Single Period]", fontsize=11, fontweight="bold")
+ax_pixel.set_ylabel("Laser Voltage (V)", fontsize=10.5, fontweight="bold")
 ax_pixel.set_ylim(-5.0, 5.0)
+ax_pixel.set_xlim(0, 1.0)
 ax_pixel.grid(True, linestyle="--", alpha=0.6)
-ax_pixel.legend(loc="upper right", framealpha=0.9, fontsize=8.5, ncol=3)
-ax_pixel.set_title("(3) Per-Pixel Demodulation Emulator (320 Samples / 16.0 ms) | Initializing...", fontsize=11, fontweight="bold", color="#1b5e20")
+ax_pixel.legend(loc="upper right", framealpha=0.9, fontsize=8.5, ncol=4)
+ax_pixel.set_title(f"(3) Averaged Waveform ({SCAN_PERIODS_PER_POINT} Periods Folded) | Initializing...", fontsize=11, fontweight="bold", color="#1b5e20")
 
 plt.tight_layout()
 
@@ -175,33 +177,37 @@ def update(frame):
             print(f"[Notice] Read warning: {read_err}")
         return line_laser, line_chop
 
-    # Extract scope window (10.0 ms)
-    scope_laser = cached_laser[-CHUNK_SIZE:]
+    # Extract scope window (10.0 ms) & Software AC-Couple
+    scope_laser_raw = cached_laser[-CHUNK_SIZE:]
+    scope_dc = float(np.mean(scope_laser_raw))
+    scope_laser_ac = scope_laser_raw - scope_dc  # Software AC-Coupled (0V centered)
     scope_chop = cached_chop[-CHUNK_SIZE:]
 
     # Update Subplot 1 & 2 waveforms
-    line_laser.set_ydata(scope_laser)
+    line_laser.set_ydata(scope_laser_ac)
     line_chop.set_ydata(scope_chop)
 
-    # --- Subplot 3: Extract & Downsample Exact 320 Samples (16.0 ms @ 20 kHz) ---
+    # --- Subplot 3: Extract, Downsample, Software AC-Couple & Ensemble-Average Across 32 Cycles ---
     pixel_raw_100k = cached_laser[-RAW_SAMPLES_IN_PIXEL:]
-    # Downsample from 100 kHz to 20 kHz (takes every 5th sample)
-    samples_320 = pixel_raw_100k[::downsample_step][:SCAN_SAMPLES_PER_POINT]
+    samples_raw = pixel_raw_100k[::downsample_step][:SCAN_SAMPLES_PER_POINT]
     
-    if len(samples_320) == SCAN_SAMPLES_PER_POINT:
-        med_pixel = float(np.median(samples_320))
-        high_mask = samples_320 > med_pixel
-        low_mask = samples_320 <= med_pixel
+    if len(samples_raw) == SCAN_SAMPLES_PER_POINT:
+        # Software AC Coupling for pixel
+        pixel_dc = float(np.mean(samples_raw))
+        samples_ac = samples_raw - pixel_dc
 
-        high_pts = samples_320[high_mask]
-        low_pts = samples_320[low_mask]
+        # Fold into 32 periods x 20 samples matrix
+        laser_matrix = samples_ac[:SCAN_PERIODS_PER_POINT * SAMPLES_PER_CYCLE].reshape((SCAN_PERIODS_PER_POINT, SAMPLES_PER_CYCLE))
+        avg_cycle = np.mean(laser_matrix, axis=0)
 
-        t_high = t_pixel_ms[high_mask]
-        t_low = t_pixel_ms[low_mask]
+        med_pixel = float(np.median(samples_ac))
+        high_mask = samples_ac > med_pixel
+        low_mask = samples_ac <= med_pixel
 
-        line_pixel_wave.set_ydata(samples_320)
-        line_pixel_high.set_data(t_high, high_pts)
-        line_pixel_low.set_data(t_low, low_pts)
+        high_pts = samples_ac[high_mask]
+        low_pts = samples_ac[low_mask]
+
+        line_pixel_avg.set_ydata(avg_cycle)
 
         h_mean = float(high_pts.mean()) if high_pts.size else 0.0
         l_mean = float(low_pts.mean()) if low_pts.size else 0.0
@@ -213,7 +219,7 @@ def update(frame):
 
     # Periodic metrics & auto-scale update (every 3 frames for high responsiveness)
     if frame_count % 3 == 0:
-        l_min, l_max = scope_laser.min(), scope_laser.max()
+        l_min, l_max = scope_laser_ac.min(), scope_laser_ac.max()
         c_min, c_max = scope_chop.min(), scope_chop.max()
 
         # Dynamic vertical auto-scaling for Subplots 1 & 2
@@ -224,27 +230,26 @@ def update(frame):
         ax_chop.set_ylim(min(-0.5, c_min - margin_c), max(5.5, c_max + margin_c))
 
         # Auto-scale Subplot 3
-        if len(samples_320) == SCAN_SAMPLES_PER_POINT:
-            p_min, p_max = samples_320.min(), samples_320.max()
+        if len(samples_raw) == SCAN_SAMPLES_PER_POINT:
+            p_min, p_max = avg_cycle.min(), avg_cycle.max()
             margin_p = max(0.3, (p_max - p_min) * 0.18)
             ax_pixel.set_ylim(p_min - margin_p, p_max + margin_p)
 
         # --- 1. Subplot 1 Metrics: Continuous Laser Signal Analysis ---
-        med_scope = float(np.median(scope_laser))
+        med_scope = float(np.median(scope_laser_ac))
         line_scope_med.set_ydata([med_scope, med_scope])
 
-        high_vals = scope_laser[scope_laser > med_scope]
-        low_vals = scope_laser[scope_laser <= med_scope]
+        high_vals = scope_laser_ac[scope_laser_ac > med_scope]
+        low_vals = scope_laser_ac[scope_laser_ac <= med_scope]
 
         if high_vals.size and low_vals.size:
             diff_v = float(high_vals.mean() - low_vals.mean())
             vpp = float(l_max - l_min)
-            dc_mean = float(scope_laser.mean())
-            is_clipped = bool(np.any(np.abs(scope_laser) > 9.8))
+            is_clipped = bool(np.any(np.abs(scope_laser_raw) > 9.8))
             clip_warn = " [RAIL CLIPPING!]" if is_clipped else ""
 
             ax_laser.set_title(
-                f"Laser (ai7) | High-Low: {diff_v:.3f} V ({diff_v * 1000:.1f} mV) | Vpp: {vpp:.2f} V | Midpoint DC: {dc_mean:+.2f} V{clip_warn}",
+                f"Laser (ai7) [Software AC-Coupled] | High-Low: {diff_v:.3f} V ({diff_v * 1000:.1f} mV) | Vpp: {vpp:.2f} V | Raw DC: {scope_dc:+.2f} V{clip_warn}",
                 fontsize=10.5,
                 fontweight="bold",
                 color="#b30000" if is_clipped else "#0b5394",
@@ -275,16 +280,16 @@ def update(frame):
             )
 
         # --- 3. Subplot 3 Metrics: Pixel Demodulation Result ---
-        if len(samples_320) == SCAN_SAMPLES_PER_POINT:
-            p_vpp = float(samples_320.max() - samples_320.min())
+        if len(samples_raw) == SCAN_SAMPLES_PER_POINT:
+            p_vpp = float(avg_cycle.max() - avg_cycle.min())
             ax_pixel.set_title(
-                f"Per-Pixel Demodulation (320 samples @ 20 kHz) | Image Pixel Voltage ΔV = {pixel_val:.3f} V | High: {h_mean:.2f}V, Low: {l_mean:.2f}V | Vpp: {p_vpp:.2f}V",
+                f"Averaged Single Cycle ({SCAN_PERIODS_PER_POINT} Periods Folded) | Image Pixel Voltage ΔV = {pixel_val:.3f} V | High: {h_mean:.2f}V, Low: {l_mean:.2f}V | Vpp: {p_vpp:.2f}V",
                 fontsize=10.5,
                 fontweight="bold",
                 color="#1b5e20",
             )
 
-    return line_laser, line_chop, line_pixel_wave
+    return line_laser, line_chop, line_pixel_avg
 
 
 # Launch fast 30 FPS animation

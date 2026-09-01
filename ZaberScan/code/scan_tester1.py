@@ -49,13 +49,13 @@ X_START_NATIVE = 890000    # Left boundary of coin window (~21.4 mm span)
 X_END_NATIVE   = 440000    # Right boundary of coin window
 Y_START_NATIVE = 475000    # Bottom boundary of coin window (~20.5 mm span)
 Y_END_NATIVE   = 905000    # Top boundary of coin window
-Z_FOCUS_NATIVE = 108498    # Current Z focus depth (~5.167 mm)
+Z_FOCUS_NATIVE = 103116    # Current Z focus depth (~4.911 mm)
 
-# Target Step Size (200 um)
-TARGET_STEP_UM = 200.0
+# Target Step Size (100 um)
+TARGET_STEP_UM = 100.0
 SCAN_LABEL = "scan_5"      # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3, scan_4, scan_5)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
-STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~4199.47 steps
+STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~2099.74 steps
 
 # Calculate Grid Points
 NUM_X = int(round(abs(X_END_NATIVE - X_START_NATIVE) / STEP_NATIVE)) + 1
@@ -77,15 +77,16 @@ DEVICE_NAME = "Dev1"
 LASER_CHANNEL = f"{DEVICE_NAME}/ai7"       # Channel 7: Laser terminal AC-coupled signal
 CHOPPER_CHANNEL = f"{DEVICE_NAME}/ai15"    # Channel 15: Optical chopper TTL reference
 CHOPPER_FREQ_HZ = 1000                     # Optical chopper frequency (1000 Hz)
-PERIODS_PER_POINT = 16                     # 16 chopper periods averaged per pixel (16.0 ms)
+PERIODS_PER_POINT = 32                     # 32 chopper periods averaged per pixel (32.0 ms)
 DAQ_RATE = 20_000                          # 20 kHz DAQ rate (20 samples per chopper cycle)
-DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 320 samples (16.0 ms)
+DAQ_SAMPLES_PER_POINT = int(DAQ_RATE * PERIODS_PER_POINT / CHOPPER_FREQ_HZ)  # 640 samples (32.0 ms)
 SATURATION_THRESHOLD_V = 9.8               # Voltage rail threshold
 
 
 def extract_confocal_signal(raw_samples: np.ndarray, saturation_v: float = 9.8) -> tuple[float, bool]:
     """
     Demodulate AC-coupled chopper-modulated waveform into a confocal LFI signal.
+    Applies software AC coupling (DC mean removal) before High-Low Median Split.
     Follows Mowla et al. 2018: signal = mean(high state) - mean(low state).
     Returns (signal, is_saturated).
     """
@@ -93,9 +94,13 @@ def extract_confocal_signal(raw_samples: np.ndarray, saturation_v: float = 9.8) 
     is_saturated = bool(np.all(np.abs(data) > saturation_v) or np.ptp(data) < 1e-4)
     if is_saturated:
         return np.nan, True
-    threshold = np.median(data)
-    high_vals = data[data > threshold]
-    low_vals = data[data <= threshold]
+    
+    # Software AC Coupling: remove DC offset to center waveform symmetrically at 0.0V
+    ac_data = data - np.mean(data)
+    
+    threshold = np.median(ac_data)
+    high_vals = ac_data[ac_data > threshold]
+    low_vals = ac_data[ac_data <= threshold]
     if high_vals.size and low_vals.size:
         return float(high_vals.mean() - low_vals.mean()), False
     return np.nan, True
@@ -126,15 +131,16 @@ try:
 except Exception:
     pass
 
-t_pixel_ms = np.arange(DAQ_SAMPLES_PER_POINT) / DAQ_RATE * 1000  # Time axis (16.0 ms)
+t_pixel_ms = np.arange(DAQ_SAMPLES_PER_POINT) / DAQ_RATE * 1000  # Time axis (ms)
+t_pixel_max = float(t_pixel_ms[-1]) if len(t_pixel_ms) else 16.0
 
-# --- SUBPLOT 1: Laser Terminal AC Waveform (320 samples @ 20 kHz) ---
-line_laser, = ax_laser.plot(t_pixel_ms, np.zeros(DAQ_SAMPLES_PER_POINT), color="#1f77b4", lw=1.6, label="Laser Terminal (ai7)")
+# --- SUBPLOT 1: Laser Terminal AC Waveform ---
+line_laser, = ax_laser.plot(t_pixel_ms, np.zeros(DAQ_SAMPLES_PER_POINT), color="#1f77b4", lw=1.6, label="Laser Terminal (ai7) [AC-Coupled]")
 line_scope_med = ax_laser.axhline(0.0, color="#d62728", linestyle="--", lw=1.2, alpha=0.8, label="Median Threshold")
 ax_laser.axhline(0.0, color="#666666", linestyle=":", lw=1.0, alpha=0.6)  # 0V Baseline
 ax_laser.set_ylabel("Laser (V)", fontsize=10.5, fontweight="bold")
 ax_laser.set_ylim(-5.0, 5.0)
-ax_laser.set_xlim(0, 16.0)
+ax_laser.set_xlim(0, t_pixel_max)
 ax_laser.grid(True, linestyle="--", alpha=0.6)
 ax_laser.legend(loc="upper right", framealpha=0.9, fontsize=8.5)
 ax_laser.set_title("(1) Laser Terminal AC Signal (ai7) | Initializing...", fontsize=10.5, fontweight="bold", color="#0b5394")
@@ -144,26 +150,27 @@ line_chop, = ax_chop.plot(t_pixel_ms, np.zeros(DAQ_SAMPLES_PER_POINT), color="#f
 ax_chop.axhline(0.0, color="#666666", linestyle=":", lw=1.0, alpha=0.6)
 ax_chop.set_ylabel("Chopper TTL (V)", fontsize=10.5, fontweight="bold")
 ax_chop.set_ylim(-0.5, 5.5)
-ax_chop.set_xlim(0, 16.0)
+ax_chop.set_xlim(0, t_pixel_max)
 ax_chop.grid(True, linestyle="--", alpha=0.6)
 ax_chop.legend(loc="upper right", framealpha=0.9, fontsize=8.5)
 ax_chop.set_title("(2) Optical Chopper Reference Signal (ai15) | Initializing...", fontsize=10.5, fontweight="bold", color="#b45f06")
 
-# --- SUBPLOT 3: Per-Pixel Demodulation Breakdown (High/Low plateaus, ΔV) ---
-line_pixel_high, = ax_pixel.plot([], [], 'o', color="#2ca02c", markersize=3.5, label="High State Samples (> Median)")
-line_pixel_low,  = ax_pixel.plot([], [], 'o', color="#9467bd", markersize=3.5, label="Low State Samples (<= Median)")
-line_pixel_wave, = ax_pixel.plot(t_pixel_ms, np.zeros(DAQ_SAMPLES_PER_POINT), color="#7f7f7f", lw=1.0, alpha=0.6)
-line_pixel_hmean = ax_pixel.axhline(0.0, color="#2ca02c", linestyle="-", lw=1.5, label="High Plateau Mean")
-line_pixel_lmean = ax_pixel.axhline(0.0, color="#9467bd", linestyle="-", lw=1.5, label="Low Plateau Mean")
-line_pixel_med   = ax_pixel.axhline(0.0, color="#d62728", linestyle="--", lw=1.2, label="Median Threshold")
+# --- SUBPLOT 3: Single-Period Phase-Averaged Waveform (Ensemble averaged across all periods) ---
+SAMPLES_PER_CYCLE = int(DAQ_RATE / CHOPPER_FREQ_HZ)  # 20 samples per 1 ms period
+t_cycle_ms = np.arange(SAMPLES_PER_CYCLE) / DAQ_RATE * 1000  # 0.0 to 0.95 ms
 
-ax_pixel.set_xlabel("Pixel Acquisition Time (ms) — [16 Chopper Cycles / 320 Samples @ 20 kHz]", fontsize=11, fontweight="bold")
-ax_pixel.set_ylabel("Sampled Voltage (V)", fontsize=10.5, fontweight="bold")
+line_cycle_avg, = ax_pixel.plot(t_cycle_ms, np.zeros(SAMPLES_PER_CYCLE), '-o', color="#1b5e20", lw=2.4, markersize=5.5, label=f"Averaged Cycle ({PERIODS_PER_POINT}× Avg)")
+line_cycle_hmean = ax_pixel.axhline(0.0, color="#2ca02c", linestyle="-", lw=1.6, label="High Plateau Mean")
+line_cycle_lmean = ax_pixel.axhline(0.0, color="#9467bd", linestyle="-", lw=1.6, label="Low Plateau Mean")
+line_cycle_med   = ax_pixel.axhline(0.0, color="#d62728", linestyle="--", lw=1.2, label="Median Threshold")
+
+ax_pixel.set_xlabel("Chopper Cycle Phase Time (ms) — [1.0 ms Single Period]", fontsize=11, fontweight="bold")
+ax_pixel.set_ylabel("Laser Voltage (V)", fontsize=10.5, fontweight="bold")
 ax_pixel.set_ylim(-5.0, 5.0)
-ax_pixel.set_xlim(0, 16.0)
+ax_pixel.set_xlim(0, 1.0)
 ax_pixel.grid(True, linestyle="--", alpha=0.6)
-ax_pixel.legend(loc="upper right", framealpha=0.9, fontsize=8.5, ncol=3)
-ax_pixel.set_title("(3) Per-Pixel Demodulation Breakdown (320 Samples / 16.0 ms) | Waiting...", fontsize=10.5, fontweight="bold", color="#1b5e20")
+ax_pixel.legend(loc="upper right", framealpha=0.9, fontsize=8.5, ncol=4)
+ax_pixel.set_title(f"(3) Averaged Waveform ({PERIODS_PER_POINT} Periods Folded) | Waiting...", fontsize=10.5, fontweight="bold", color="#1b5e20")
 
 plt.tight_layout()
 plt.show(block=False)
@@ -231,37 +238,44 @@ try:
                     if is_sat:
                         saturated_points_count += 1
 
-                    # --- LIVE 3-SUBPLOT WAVEFORM UPDATE ON EVERY PIXEL ---
-                    line_laser.set_ydata(raw_laser)
+                    # --- SOFTWARE AC COUPLING & ENSEMBLE-AVERAGED CYCLE ---
+                    laser_dc = float(np.mean(raw_laser))
+                    laser_ac = raw_laser - laser_dc  # Software AC-Coupled (0V centered)
+
+                    laser_matrix = laser_ac[:PERIODS_PER_POINT * SAMPLES_PER_CYCLE].reshape((PERIODS_PER_POINT, SAMPLES_PER_CYCLE))
+                    avg_laser_cycle = np.mean(laser_matrix, axis=0)
+
+                    # Update plot lines
+                    line_laser.set_ydata(laser_ac)
                     line_chop.set_ydata(raw_chop)
-                    line_pixel_wave.set_ydata(raw_laser)
+                    line_cycle_avg.set_ydata(avg_laser_cycle)
 
-                    med_val = float(np.median(raw_laser))
-                    high_mask = raw_laser > med_val
-                    low_mask = raw_laser <= med_val
-                    high_pts = raw_laser[high_mask]
-                    low_pts = raw_laser[low_mask]
-
-                    line_pixel_high.set_data(t_pixel_ms[high_mask], high_pts)
-                    line_pixel_low.set_data(t_pixel_ms[low_mask], low_pts)
+                    med_val = float(np.median(laser_ac))
+                    high_mask = laser_ac > med_val
+                    low_mask = laser_ac <= med_val
+                    high_pts = laser_ac[high_mask]
+                    low_pts = laser_ac[low_mask]
 
                     h_mean = float(high_pts.mean()) if high_pts.size else 0.0
                     l_mean = float(low_pts.mean()) if low_pts.size else 0.0
 
                     line_scope_med.set_ydata([med_val, med_val])
-                    line_pixel_hmean.set_ydata([h_mean, h_mean])
-                    line_pixel_lmean.set_ydata([l_mean, l_mean])
-                    line_pixel_med.set_ydata([med_val, med_val])
+                    line_cycle_hmean.set_ydata([h_mean, h_mean])
+                    line_cycle_lmean.set_ydata([l_mean, l_mean])
+                    line_cycle_med.set_ydata([med_val, med_val])
 
                     # Dynamic auto-scale Y axes
-                    l_min, l_max = float(raw_laser.min()), float(raw_laser.max())
+                    l_min, l_max = float(laser_ac.min()), float(laser_ac.max())
                     margin_l = max(0.4, (l_max - l_min) * 0.18)
                     ax_laser.set_ylim(l_min - margin_l, l_max + margin_l)
-                    ax_pixel.set_ylim(l_min - margin_l, l_max + margin_l)
 
                     c_min, c_max = float(raw_chop.min()), float(raw_chop.max())
                     margin_c = max(0.5, (c_max - c_min) * 0.18)
                     ax_chop.set_ylim(min(-0.5, c_min - margin_c), max(5.5, c_max + margin_c))
+
+                    p_min, p_max = float(avg_laser_cycle.min()), float(avg_laser_cycle.max())
+                    margin_p = max(0.4, (p_max - p_min) * 0.18)
+                    ax_pixel.set_ylim(p_min - margin_p, p_max + margin_p)
 
                     # Update Titles
                     is_clipped = bool(np.any(np.abs(raw_laser) > 9.8))
@@ -270,7 +284,7 @@ try:
                     est_rem_now = max(0.0, (elapsed_now / max(1, point_counter)) * (NUM_X * NUM_Y) - elapsed_now)
 
                     ax_laser.set_title(
-                        f"[Row {row_idx+1}/{NUM_Y} ({point_counter/(NUM_X*NUM_Y)*100:.1f}%) | Rem: {est_rem_now/60:.1f}m] Laser (ai7) | High-Low: {confocal_val:.3f} V | DC: {raw_laser.mean():+.2f} V{clip_warn}",
+                        f"[Row {row_idx+1}/{NUM_Y} ({point_counter/(NUM_X*NUM_Y)*100:.1f}%) | Rem: {est_rem_now/60:.1f}m] Laser (ai7) [AC-Coupled] | High-Low: {confocal_val:.3f} V | Raw DC: {laser_dc:+.2f} V{clip_warn}",
                         fontsize=10.0,
                         fontweight="bold",
                         color="#b30000" if is_clipped else "#0b5394",
@@ -282,7 +296,7 @@ try:
                         color="#b45f06",
                     )
                     ax_pixel.set_title(
-                        f"Per-Pixel Demodulation [Col {col_idx+1}/{NUM_X}] | ΔV = {confocal_val:.3f} V | High: {h_mean:.2f}V, Low: {l_mean:.2f}V",
+                        f"Averaged Single Cycle ({PERIODS_PER_POINT} Periods Folded) [Col {col_idx+1}/{NUM_X}] | ΔV = {confocal_val:.3f} V | High: {h_mean:.2f}V, Low: {l_mean:.2f}V",
                         fontsize=10.0,
                         fontweight="bold",
                         color="#1b5e20",
