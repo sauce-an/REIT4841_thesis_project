@@ -411,63 +411,8 @@ fig_save.savefig(png_path, dpi=300)
 print(f"  - Saved image figure : {png_path}")
 print("\n[SUCCESS] Image processing and saving complete.")
 
-# ==============================================================================
-# 6. AUTOMATIC NOTES LOGGING & GITHUB PUSH
-# ==============================================================================
-try:
-    print("\n" + "=" * 70)
-    print("UPDATING NOTES.TXT & PUSHING SCAN RESULTS TO GITHUB")
-    print("=" * 70, flush=True)
-
-    total_elapsed_min = (time.time() - start_time) / 60.0
-    notes_path = os.path.join(SCRIPT_DIR, "notes.txt")
-    timestamp_str = time.strftime("%Y-%m-%d")
-
-    notes_entry = f"""18. 50 µm — {SCAN_LABEL} ({timestamp_str}):
-    - Grid: {NUM_X} (X) x {NUM_Y} (Y) = {NUM_X * NUM_Y:,} points
-    - Focus: Z = {Z_FOCUS_NATIVE} native units (~{Z_FOCUS_NATIVE*0.047625/1000.0:.3f} mm)
-    - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.5%–95.5% Colormap Percentiles
-    - Optical State: Performed with ~50% specular reflection filtered out by the Quarter-Wave Plate (QWP).
-    - Duration: {total_elapsed_min:.2f} minutes
-    - Status: SUCCESSFUL
-    - Saturated/Rail points: {saturated_points_count:,} / {NUM_X * NUM_Y:,} ({sat_pct:.2f}%)
-    - Valid raw signal range: [{raw_min_str}, {raw_max_str}]
-    - Adaptive display range: [{vmin:.3f} V, {vmax:.3f} V]
-    - Files: coin_scan_50um_{SCAN_LABEL}.*"""
-
-    if os.path.exists(notes_path):
-        with open(notes_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        target_marker = f"18. 50 µm — {SCAN_LABEL}"
-        split_marker = "================================================================================\nANALYZED BENCHMARK FIGURES"
-
-        if target_marker in content and split_marker in content:
-            before_part = content.split(target_marker)[0]
-            after_part = content.split(split_marker)[1]
-            updated_content = before_part.rstrip() + "\n\n" + notes_entry + "\n\n" + split_marker + after_part
-        elif split_marker in content:
-            parts = content.split(split_marker)
-            updated_content = parts[0].rstrip() + "\n\n" + notes_entry + "\n\n" + split_marker + parts[1]
-        else:
-            updated_content = content.rstrip() + "\n\n" + notes_entry + "\n"
-
-        with open(notes_path, "w", encoding="utf-8") as f:
-            f.write(updated_content)
-        print("[OK] notes.txt updated successfully with final metrics.", flush=True)
-
-    import subprocess
-    env = os.environ.copy()
-    subprocess.run(["git", "add", npy_path, csv_path, png_path, notes_path], cwd=PROJECT_DIR, check=True, env=env)
-    commit_msg = f"Add 50um ({SCAN_LABEL}) scan results with ~50% specular filtered by QWP"
-    subprocess.run(["git", "commit", "-m", commit_msg], cwd=PROJECT_DIR, check=True, env=env)
-    subprocess.run(["git", "push", "origin", "main"], cwd=PROJECT_DIR, check=True, env=env)
-    print("\n[SUCCESS] All scan results and notes pushed to GitHub successfully!\n", flush=True)
-except Exception as push_err:
-    print(f"\n[WARNING] Automatic Git push encountered an issue: {push_err}", flush=True)
-
 # Update window title to done and wait for close
-ax_laser.set_title(f"[SCAN COMPLETE & PUSHED TO GIT] Saved to {png_path}", fontsize=10.5, fontweight="bold", color="#1b5e20")
+ax_laser.set_title(f"[SCAN COMPLETE] Saved to {png_path}", fontsize=10.5, fontweight="bold", color="#1b5e20")
 fig.canvas.draw_idle()
 print("\nClose the Live GUI Monitor window to exit.")
 plt.ioff()
