@@ -318,6 +318,14 @@ SCAN RUN HISTORY & EXPERIMENT LOG
     - Adaptive display range: [0.956 V, 3.486 V]
     - Files: coin_scan_100um_scan_5.*
 
+18. 50 µm — scan_8 (2026-09-02):
+    - Grid: 430 (X) x 411 (Y) = 176,730 points
+    - Focus: Z = 103116 native units (~4.911 mm)
+    - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.5%–95.5% Colormap Percentiles
+    - Optical State: Performed with ~50% specular reflection filtered out by the Quarter-Wave Plate (QWP).
+    - Status: IN PROGRESS / PENDING
+    - Files: coin_scan_50um_scan_8.*
+
 ================================================================================
 ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
 ================================================================================
