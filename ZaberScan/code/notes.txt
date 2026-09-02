@@ -30,6 +30,11 @@ Z-Axis Behaviour:
 
 IMPORTANT: Always close Zaber Console before running any script!
 
+Optical Setup & Polarization Feedback Configuration:
+  - Feedback Regime: Maximum feedback mode across previous scans.
+  - Quarter-Wave Plate (QWP): Set to NOT filter out any of the specular reflection.
+  - Linear Polarizer: Configured to allow full transmission of retro-reflected feedback without attenuation.
+
 ================================================================================
 TARGET (FIGURINE)
 ================================================================================
@@ -293,6 +298,7 @@ SCAN RUN HISTORY & EXPERIMENT LOG
     - Grid: 430 (X) x 411 (Y) = 176,730 points
     - Focus: Z = 103116 native units (~4.911 mm)
     - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.5%–95.5% Colormap Percentiles
+    - Optical State: Performed under MAX optical feedback regime (QWP and Linear Polarizer set to not filter any of the specular reflection).
     - Duration: 469.48 minutes
     - Status: SUCCESSFUL
     - Saturated/Rail points: 682 / 176,730 (0.39%)
@@ -304,6 +310,7 @@ SCAN RUN HISTORY & EXPERIMENT LOG
     - Grid: 215 (X) x 206 (Y) = 44,290 points
     - Focus: Z = 103116 native units (~4.911 mm)
     - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.5%–95.5% Colormap Percentiles
+    - Optical State: Performed under MAX optical feedback regime (QWP and Linear Polarizer set to not filter any of the specular reflection).
     - Duration: 135.47 minutes
     - Status: SUCCESSFUL
     - Saturated/Rail points: 91 / 44,290 (0.21%)
