@@ -41,13 +41,22 @@ Optical Setup & Polarization Feedback Configuration:
   - Linear Polarizer: Configured to allow full transmission of retro-reflected feedback without attenuation.
 
 ================================================================================
-TARGET (FIGURINE)
+TARGET SPECIFICATIONS
 ================================================================================
 
-Dimensions:     ~35 mm wide × ~40 mm tall
-Scan area:      35.0 mm (X) × 40.0 mm (Y)
-Step size:       0.5 mm
-Grid points:    70 × 80 = 5,600 points
+1. Specular Target (Coin):
+   - Type:       Metallic / Specular reflective relief (2 Euro coin)
+   - Diameter:   ~25.75 mm
+   - Scan Area:  21.43 mm (X) x 20.48 mm (Y)
+   - Native:     X in [890000, 440000], Y in [475000, 905000]
+   - Results:    Saved in ZaberScan/results/specular/
+
+2. Diffuse Target:
+   - Type:       Circular diffuse scatterer
+   - Diameter:   ~12 mm
+   - Scan Area:  Retained identical at 21.43 mm (X) x 20.48 mm (Y) for simplicity and full FOV coverage
+   - Native:     X in [890000, 440000], Y in [475000, 905000] (No script modifications required)
+   - Results:    To be saved in ZaberScan/results/diffuse/
 
 ================================================================================
 SAFETY
