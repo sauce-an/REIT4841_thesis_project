@@ -17,11 +17,12 @@ except Exception:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 RESULTS_DIR = os.path.join(PROJECT_DIR, "results")
+SPECULAR_DIR = os.path.join(RESULTS_DIR, "specular")
 NOTES_PATH = os.path.join(SCRIPT_DIR, "notes.txt")
 
-TARGET_PNG = os.path.join(RESULTS_DIR, "coin_scan_50um_scan_9.png")
-TARGET_NPY = os.path.join(RESULTS_DIR, "coin_scan_50um_scan_9.npy")
-TARGET_CSV = os.path.join(RESULTS_DIR, "coin_scan_50um_scan_9.csv")
+TARGET_PNG = os.path.join(SPECULAR_DIR, "coin_scan_50um_scan_9.png")
+TARGET_NPY = os.path.join(SPECULAR_DIR, "coin_scan_50um_scan_9.npy")
+TARGET_CSV = os.path.join(SPECULAR_DIR, "coin_scan_50um_scan_9.csv")
 
 print("=" * 70)
 print("BACKGROUND WATCHER ACTIVE: Waiting for coin_scan_50um_scan_9 completion...")

@@ -1,7 +1,12 @@
 ================================================================================
 ZABER SCAN PROJECT — NOTES
 ================================================================================
-Last updated: 2026-08-06
+Last updated: 2026-09-10
+
+DIRECTORY STRUCTURE:
+  - ZaberScan/results/specular/ : All specular coin scans (100 µm scans 1-5, 200 µm scans 1-4, 50 µm scans 1-9)
+  - ZaberScan/results/diffuse/  : Reserved for upcoming diffuse target scans
+  - ZaberScan/results/analyzed/ : Analytical comparison figures and scripts
 
 ================================================================================
 HARDWARE SETUP

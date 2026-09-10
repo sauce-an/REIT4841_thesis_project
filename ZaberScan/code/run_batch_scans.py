@@ -31,8 +31,11 @@ except Exception:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 RESULTS_DIR = os.path.join(PROJECT_DIR, "results")
+SPECULAR_DIR = os.path.join(RESULTS_DIR, "specular")
+DIFFUSE_DIR = os.path.join(RESULTS_DIR, "diffuse")
+os.makedirs(SPECULAR_DIR, exist_ok=True)
+os.makedirs(DIFFUSE_DIR, exist_ok=True)
 NOTES_PATH = os.path.join(SCRIPT_DIR, "notes.txt")
-os.makedirs(RESULTS_DIR, exist_ok=True)
 
 Library.enable_device_db_store()
 
@@ -176,10 +179,10 @@ def run_single_scan(target_step_um: float, scan_label: str) -> dict:
         print("[OK] Stages returned to start.", flush=True)
 
     # Save output files
-    npy_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}.npy")
-    csv_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}.csv")
-    png_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}.png")
-    chk_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}_checkpoint.npy")
+    npy_path = os.path.join(SPECULAR_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}.npy")
+    csv_path = os.path.join(SPECULAR_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}.csv")
+    png_path = os.path.join(SPECULAR_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}.png")
+    chk_path = os.path.join(SPECULAR_DIR, f"coin_scan_{int(target_step_um)}um_{scan_label}_checkpoint.npy")
 
     np.save(npy_path, image_data)
     np.savetxt(csv_path, image_data, delimiter=",", fmt="%.6e")
@@ -301,8 +304,8 @@ def append_notes_and_push(results_50um: dict, results_100um: dict):
         env = os.environ.copy()
         git_add_cmd = [
             "git", "add",
-            os.path.join(RESULTS_DIR, f"coin_scan_50um_{results_50um['label']}.*"),
-            os.path.join(RESULTS_DIR, f"coin_scan_100um_{results_100um['label']}.*"),
+            os.path.join(SPECULAR_DIR, f"coin_scan_50um_{results_50um['label']}.*"),
+            os.path.join(SPECULAR_DIR, f"coin_scan_100um_{results_100um['label']}.*"),
             NOTES_PATH,
         ]
         subprocess.run(git_add_cmd, cwd=PROJECT_DIR, check=True, env=env)

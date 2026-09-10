@@ -28,7 +28,10 @@ except Exception:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 RESULTS_DIR = os.path.join(PROJECT_DIR, "results")
-os.makedirs(RESULTS_DIR, exist_ok=True)
+TARGET_CATEGORY = "specular"        # Options: "specular" (coin) or "diffuse" (diffuse target)
+TARGET_NAME = "coin"                # Prefix: "coin", "diffuse", etc.
+CATEGORY_DIR = os.path.join(RESULTS_DIR, TARGET_CATEGORY)
+os.makedirs(CATEGORY_DIR, exist_ok=True)
 
 # Enable local device database for unit conversions
 Library.enable_device_db_store()
@@ -348,10 +351,10 @@ print("\n" + "=" * 70)
 print("PROCESSING & SAVING IMAGE DATA")
 print("=" * 70, flush=True)
 
-npy_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.npy")
-csv_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.csv")
-png_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.png")
-chk_path = os.path.join(RESULTS_DIR, f"coin_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}_checkpoint.npy")
+npy_path = os.path.join(CATEGORY_DIR, f"{TARGET_NAME}_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.npy")
+csv_path = os.path.join(CATEGORY_DIR, f"{TARGET_NAME}_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.csv")
+png_path = os.path.join(CATEGORY_DIR, f"{TARGET_NAME}_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}.png")
+chk_path = os.path.join(CATEGORY_DIR, f"{TARGET_NAME}_scan_{int(TARGET_STEP_UM)}um_{SCAN_LABEL}_checkpoint.npy")
 
 np.save(npy_path, image_data)
 np.savetxt(csv_path, image_data, delimiter=",", fmt="%.6e")

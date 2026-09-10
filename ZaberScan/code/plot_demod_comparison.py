@@ -41,8 +41,8 @@ ANALYZED_DIR = os.path.join(RESULTS_DIR, "analyzed")
 os.makedirs(ANALYZED_DIR, exist_ok=True)
 
 # Input Datasets
-file_highlow = os.path.join(RESULTS_DIR, "coin_scan_50um_scan_2.npy")  # 50um scan_2: Mowla High-Low
-file_acrms = os.path.join(RESULTS_DIR, "coin_scan_50um_scan_3.npy")    # 50um scan_3: AC RMS
+file_highlow = os.path.join(RESULTS_DIR, "specular", "coin_scan_50um_scan_2.npy")  # 50um scan_2: Mowla High-Low
+file_acrms = os.path.join(RESULTS_DIR, "specular", "coin_scan_50um_scan_3.npy")    # 50um scan_3: AC RMS
 output_png = os.path.join(ANALYZED_DIR, "demod_comparison_highlow_vs_acrms.png")
 
 # Load datasets
