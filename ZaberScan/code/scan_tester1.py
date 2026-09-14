@@ -28,8 +28,8 @@ except Exception:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 RESULTS_DIR = os.path.join(PROJECT_DIR, "results")
-TARGET_CATEGORY = "specular"        # Options: "specular" (coin) or "diffuse" (diffuse target)
-TARGET_NAME = "coin"                # Prefix: "coin", "diffuse", etc.
+TARGET_CATEGORY = "diffuse"         # Options: "specular" (coin) or "diffuse" (diffuse target)
+TARGET_NAME = "diffuse"             # Prefix: "coin", "diffuse", etc.
 CATEGORY_DIR = os.path.join(RESULTS_DIR, TARGET_CATEGORY)
 os.makedirs(CATEGORY_DIR, exist_ok=True)
 
@@ -52,11 +52,11 @@ X_START_NATIVE = 890000    # Left boundary of coin window (~21.4 mm span)
 X_END_NATIVE   = 440000    # Right boundary of coin window
 Y_START_NATIVE = 475000    # Bottom boundary of coin window (~20.5 mm span)
 Y_END_NATIVE   = 905000    # Top boundary of coin window
-Z_FOCUS_NATIVE = 103116    # Current Z focus depth (~4.911 mm)
+Z_FOCUS_NATIVE = 163346    # Current Z focus depth (~7.779 mm)
 
 # Target Step Size (50 um)
 TARGET_STEP_UM = 50.0
-SCAN_LABEL = "scan_9"      # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3, scan_4, scan_5, scan_8, scan_9)
+SCAN_LABEL = "scan_1"      # Identifier for multi-round scans (e.g. scan_1, scan_2, etc.)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
 
@@ -405,7 +405,7 @@ im_out = ax_out.imshow(
 )
 cbar_out = fig_save.colorbar(im_out, ax=ax_out, fraction=0.046, pad=0.04)
 cbar_out.set_label(f"Demodulated LFI Reflectance (V) [Adaptive {vmin:.2f}V – {vmax:.2f}V]", fontsize=11, fontweight="bold")
-ax_out.set_title(f"LFI 2D Raster Scan — Coin Target (Full Specular Filtration, QWP at ~285 deg)\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step | High-Low Demod)", fontsize=12, fontweight="bold")
+ax_out.set_title(f"LFI 2D Raster Scan — Diffuse Target ({SCAN_LABEL})\n({scan_width_mm:.2f} x {scan_height_mm:.2f} mm, ~{int(TARGET_STEP_UM)} µm step | High-Low Demod)", fontsize=12, fontweight="bold")
 ax_out.set_xlabel("X Position (mm)", fontsize=11, fontweight="bold")
 ax_out.set_ylabel("Y Position (mm)", fontsize=11, fontweight="bold")
 fig_save.tight_layout()

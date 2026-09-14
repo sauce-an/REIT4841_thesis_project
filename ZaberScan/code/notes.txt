@@ -47,6 +47,7 @@ TARGET SPECIFICATIONS
 1. Specular Target (Coin):
    - Type:       Metallic / Specular reflective relief (2 Euro coin)
    - Diameter:   ~25.75 mm
+   - Z Focus:    103,116 native units (~4.911 mm)
    - Scan Area:  21.43 mm (X) x 20.48 mm (Y)
    - Native:     X in [890000, 440000], Y in [475000, 905000]
    - Results:    Saved in ZaberScan/results/specular/
@@ -54,6 +55,7 @@ TARGET SPECIFICATIONS
 2. Diffuse Target:
    - Type:       Circular diffuse scatterer
    - Diameter:   ~12 mm
+   - Z Focus:    163,346 native units (~7.779 mm) [Calibrated 2026-09-11]
    - Scan Area:  Retained identical at 21.43 mm (X) x 20.48 mm (Y) for simplicity and full FOV coverage
    - Native:     X in [890000, 440000], Y in [475000, 905000] (No script modifications required)
    - Results:    To be saved in ZaberScan/results/diffuse/
@@ -354,6 +356,18 @@ SCAN RUN HISTORY & EXPERIMENT LOG
     - Valid raw signal range: [0.808 V, 4.312 V]
     - Adaptive display range: [0.915 V, 1.613 V]
     - Files: coin_scan_50um_scan_9.*
+
+20. Diffuse Target: 50 µm — scan_1 (2026-09-11):
+    - Target: Circular diffuse scatterer (~12 mm diameter)
+    - Grid: 430 (X) x 411 (Y) = 176,730 points
+    - Focus: Z = 163346 native units (~7.779 mm) [Calibrated 2026-09-11]
+    - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.5%–95.5% Colormap Percentiles
+    - Duration: 793.44 minutes (~13.22 hours)
+    - Status: SUCCESSFUL
+    - Saturated/Rail points: 0 / 176,730 (0.00%)
+    - Valid raw signal range: [0.731 V, 3.064 V]
+    - Adaptive display range: [0.826 V, 1.616 V]
+    - Files: diffuse_scan_50um_scan_1.* (saved in ZaberScan/results/diffuse/)
 
 ================================================================================
 ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)

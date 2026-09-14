@@ -49,7 +49,7 @@ X_START_NATIVE = 890000    # Left boundary (~21.4 mm span)
 X_END_NATIVE   = 440000    # Right boundary
 Y_START_NATIVE = 475000    # Bottom boundary (~20.5 mm span)
 Y_END_NATIVE   = 905000    # Top boundary
-Z_FOCUS_NATIVE = 103116    # Calibrated Z focus depth (~4.911 mm)
+Z_FOCUS_NATIVE = 163346    # Calibrated Z focus depth (~7.779 mm)
 
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 
@@ -320,7 +320,7 @@ def append_notes_and_push(results_50um: dict, results_100um: dict):
 if __name__ == "__main__":
     print("=" * 75)
     print("SEQUENTIAL BATCH SCAN RUNNER: 50 µm (scan_7) -> 100 µm (scan_5) -> Git Push")
-    print(f"Focus Position: Z = {Z_FOCUS_NATIVE} native units (~4.911 mm)")
+    print(f"Focus Position: Z = {Z_FOCUS_NATIVE} native units (~{Z_FOCUS_NATIVE * 0.047625 / 1000.0:.3f} mm)")
     print(f"Periods / Point: {PERIODS_PER_POINT} (640 samples @ 20 kHz / 32.0 ms)")
     print("=" * 75, flush=True)
 
