@@ -56,7 +56,7 @@ Z_FOCUS_NATIVE = 163346    # Current Z focus depth (~7.779 mm)
 
 # Target Step Size (50 um)
 TARGET_STEP_UM = 50.0
-SCAN_LABEL = "scan_1"      # Identifier for multi-round scans (e.g. scan_1, scan_2, etc.)
+SCAN_LABEL = "scan_2"      # Identifier for multi-round scans (e.g. scan_1, scan_2, etc.)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
 
