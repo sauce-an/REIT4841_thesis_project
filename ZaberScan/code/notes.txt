@@ -380,6 +380,17 @@ SCAN RUN HISTORY & EXPERIMENT LOG
     - Adaptive display range: [0.914 V, 1.658 V]
     - Files: diffuse_scan_50um_scan_2.* (saved in ZaberScan/results/diffuse/)
 
+22. Diffuse Target: 50 µm — scan_3 (2026-09-17):
+    - Target: Circular diffuse scatterer (~12 mm diameter)
+    - Grid: 430 (X) x 411 (Y) = 176,730 points
+    - Focus: Z = 163346 native units (~7.779 mm)
+    - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.01%–99.9% Colormap Percentiles
+    - Status: SUCCESSFUL
+    - Saturated/Rail points: 0 / 176,730 (0.00%)
+    - Valid raw signal range: [0.716 V, 6.474 V]
+    - Adaptive display range: [0.753 V, 2.167 V]
+    - Files: diffuse_scan_50um_scan_3.* (saved in ZaberScan/results/diffuse/)
+
 ================================================================================
 ANALYZED BENCHMARK FIGURES (ZaberScan/results/analyzed/)
 ================================================================================
