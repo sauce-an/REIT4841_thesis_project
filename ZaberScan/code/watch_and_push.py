@@ -1,6 +1,6 @@
 """
-Background Watcher: Monitors for completion of diffuse_scan_50um_scan_3.*
-Once scan_3 finishes, it updates notes.txt with final metrics and pushes to GitHub.
+Background Watcher: Monitors for completion of diffuse_scan_50um_scan_4.*
+Once scan_4 finishes, it updates notes.txt with final metrics and pushes to GitHub.
 """
 import os
 import sys
@@ -21,12 +21,12 @@ DIFFUSE_DIR = os.path.join(RESULTS_DIR, "diffuse")
 NOTES_PATH = os.path.join(SCRIPT_DIR, "notes.txt")
 SCAN_SCRIPT = os.path.join(SCRIPT_DIR, "scan_tester1.py")
 
-TARGET_PNG = os.path.join(DIFFUSE_DIR, "diffuse_scan_50um_scan_3.png")
-TARGET_NPY = os.path.join(DIFFUSE_DIR, "diffuse_scan_50um_scan_3.npy")
-TARGET_CSV = os.path.join(DIFFUSE_DIR, "diffuse_scan_50um_scan_3.csv")
+TARGET_PNG = os.path.join(DIFFUSE_DIR, "diffuse_scan_50um_scan_4.png")
+TARGET_NPY = os.path.join(DIFFUSE_DIR, "diffuse_scan_50um_scan_4.npy")
+TARGET_CSV = os.path.join(DIFFUSE_DIR, "diffuse_scan_50um_scan_4.csv")
 
 print("=" * 70)
-print("BACKGROUND WATCHER ACTIVE: Waiting for diffuse_scan_50um_scan_3 completion...")
+print("BACKGROUND WATCHER ACTIVE: Waiting for diffuse_scan_50um_scan_4 completion...")
 print(f"Monitoring path: {TARGET_PNG}")
 print("=" * 70, flush=True)
 
@@ -41,18 +41,18 @@ while True:
         if initial_size > 100_000:  # Valid PNG figure is ~500KB+
             time.sleep(15)
             if os.path.getsize(TARGET_PNG) == initial_size:
-                print("\n[DETECTED] Scan completed! diffuse_scan_50um_scan_3 files found and verified.", flush=True)
+                print("\n[DETECTED] Scan completed! diffuse_scan_50um_scan_4 files found and verified.", flush=True)
                 break
     
     # Heartbeat every 30 minutes
     elapsed_hr = (time.time() - start_watch_time) / 3600.0
     if int(time.time() - start_watch_time) % 1800 < check_interval:
-        print(f"[WATCHER RUNNING] Still monitoring for diffuse scan_3 completion... (Waiting {elapsed_hr:.1f} hrs)", flush=True)
+        print(f"[WATCHER RUNNING] Still monitoring for diffuse scan_4 completion... (Waiting {elapsed_hr:.1f} hrs)", flush=True)
         
     time.sleep(check_interval)
 
 # --- PROCESS METRICS & UPDATE NOTES ---
-print("\nCalculating metrics from diffuse_scan_50um_scan_3.npy...", flush=True)
+print("\nCalculating metrics from diffuse_scan_50um_scan_4.npy...", flush=True)
 try:
     image_data = np.load(TARGET_NPY)
     num_y, num_x = image_data.shape
@@ -71,16 +71,16 @@ try:
     sat_pct = (sat_count / total_pixels) * 100.0
     timestamp_str = time.strftime("%Y-%m-%d")
 
-    notes_entry = f"""22. Diffuse Target: 50 µm — scan_3 ({timestamp_str}):
+    notes_entry = f"""23. Diffuse Target: 50 µm — scan_4 ({timestamp_str}):
     - Target: Circular diffuse scatterer (~12 mm diameter)
     - Grid: {num_x} (X) x {num_y} (Y) = {total_pixels:,} points
-    - Focus: Z = 163346 native units (~7.779 mm)
+    - Focus: Z = 163556 native units (+10 um towards target, ~7.789 mm)
     - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.01%–99.9% Colormap Percentiles
     - Status: SUCCESSFUL
     - Saturated/Rail points: {sat_count:,} / {total_pixels:,} ({sat_pct:.2f}%)
     - Valid raw signal range: [{raw_min:.3f} V, {raw_max:.3f} V]
     - Adaptive display range: [{vmin:.3f} V, {vmax:.3f} V]
-    - Files: diffuse_scan_50um_scan_3.* (saved in ZaberScan/results/diffuse/)"""
+    - Files: diffuse_scan_50um_scan_4.* (saved in ZaberScan/results/diffuse/)"""
 
     if os.path.exists(NOTES_PATH):
         with open(NOTES_PATH, "r", encoding="utf-8") as f:
@@ -96,7 +96,7 @@ try:
 
         with open(NOTES_PATH, "w", encoding="utf-8") as f:
             f.write(updated_content)
-        print("[OK] notes.txt successfully updated with final diffuse scan_3 metrics.", flush=True)
+        print("[OK] notes.txt successfully updated with final diffuse scan_4 metrics.", flush=True)
 
 except Exception as err:
     print(f"[WARNING] Metric calculation warning: {err}", flush=True)
@@ -106,10 +106,10 @@ print("\nStaging files and pushing to GitHub...", flush=True)
 try:
     env = os.environ.copy()
     subprocess.run(["git", "add", TARGET_NPY, TARGET_CSV, TARGET_PNG, NOTES_PATH, SCAN_SCRIPT], cwd=PROJECT_DIR, check=True, env=env)
-    commit_msg = "Add results and notes for diffuse target 50um scan 3"
+    commit_msg = "Add results and notes for diffuse target 50um scan 4"
     subprocess.run(["git", "commit", "-m", commit_msg], cwd=PROJECT_DIR, check=True, env=env)
     subprocess.run(["git", "push", "origin", "main"], cwd=PROJECT_DIR, check=True, env=env)
-    print("\n[SUCCESS] Diffuse target 50um scan 3 results and notes successfully committed and pushed to GitHub!", flush=True)
+    print("\n[SUCCESS] Diffuse target 50um scan 4 results and notes successfully committed and pushed to GitHub!", flush=True)
 except Exception as push_err:
     print(f"\n[ERROR] Git push failed: {push_err}", flush=True)
 
