@@ -73,6 +73,7 @@ try:
 
     notes_entry = f"""24. Diffuse Target: 50 µm — scan_5 ({timestamp_str}):
     - Target: Circular diffuse scatterer (~12 mm diameter)
+    - Laser Drive: 10.12 mA
     - Grid: {num_x} (X) x {num_y} (Y) = {total_pixels:,} points
     - Focus: Z = 163766 native units (+20 um towards target vs scan 3, ~7.799 mm)
     - Note: Scan 4 showed improved image quality over Scan 3, testing a closer focal distance (+20 um vs scan 3). If quality degrades, next step will back up to -10 um compared to Scan 3 (Z = 163136).

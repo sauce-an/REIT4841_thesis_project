@@ -45,20 +45,22 @@ TARGET SPECIFICATIONS
 ================================================================================
 
 1. Specular Target (Coin):
-   - Type:       Metallic / Specular reflective relief (2 Euro coin)
-   - Diameter:   ~25.75 mm
-   - Z Focus:    103,116 native units (~4.911 mm)
-   - Scan Area:  21.43 mm (X) x 20.48 mm (Y)
-   - Native:     X in [890000, 440000], Y in [475000, 905000]
-   - Results:    Saved in ZaberScan/results/specular/
+   - Type:          Metallic / Specular reflective relief (2 Euro coin)
+   - Diameter:      ~25.75 mm
+   - Laser Drive:   7.32 mA
+   - Z Focus:       103,116 native units (~4.911 mm)
+   - Scan Area:     21.43 mm (X) x 20.48 mm (Y)
+   - Native:        X in [890000, 440000], Y in [475000, 905000]
+   - Results:       Saved in ZaberScan/results/specular/
 
 2. Diffuse Target:
-   - Type:       Circular diffuse scatterer
-   - Diameter:   ~12 mm
-   - Z Focus:    163,346 native units (~7.779 mm) [Calibrated 2026-09-11]
-   - Scan Area:  Retained identical at 21.43 mm (X) x 20.48 mm (Y) for simplicity and full FOV coverage
-   - Native:     X in [890000, 440000], Y in [475000, 905000] (No script modifications required)
-   - Results:    To be saved in ZaberScan/results/diffuse/
+   - Type:          Circular diffuse scatterer
+   - Diameter:      ~12 mm
+   - Laser Drive:   10.12 mA
+   - Z Focus:       163,346 native units (Scan 1-3 baseline, ~7.779 mm), 163,556 (Scan 4, +10 um), 163,766 (Scan 5, +20 um)
+   - Scan Area:     Retained identical at 21.43 mm (X) x 20.48 mm (Y) for simplicity and full FOV coverage
+   - Native:        X in [890000, 440000], Y in [475000, 905000] (No script modifications required)
+   - Results:       To be saved in ZaberScan/results/diffuse/
 
 ================================================================================
 SAFETY
