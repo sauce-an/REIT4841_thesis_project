@@ -52,11 +52,11 @@ X_START_NATIVE = 890000    # Left boundary of coin window (~21.4 mm span)
 X_END_NATIVE   = 440000    # Right boundary of coin window
 Y_START_NATIVE = 475000    # Bottom boundary of coin window (~20.5 mm span)
 Y_END_NATIVE   = 905000    # Top boundary of coin window
-Z_FOCUS_NATIVE = 163556    # Current Z focus depth (+10 um towards target, ~7.789 mm)
+Z_FOCUS_NATIVE = 163766    # Current Z focus depth (+20 um towards target vs scan 3, ~7.799 mm)
 
 # Target Step Size (50 um)
 TARGET_STEP_UM = 50.0
-SCAN_LABEL = "scan_4"      # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3, scan_4, etc.)
+SCAN_LABEL = "scan_5"      # Identifier for multi-round scans (e.g. scan_1, scan_2, scan_3, scan_4, scan_5, etc.)
 MICROSTEPS_PER_UM = 1.0 / 0.047625  # ~20.9974 steps per um
 STEP_NATIVE = TARGET_STEP_UM * MICROSTEPS_PER_UM  # ~1049.87 steps
 
