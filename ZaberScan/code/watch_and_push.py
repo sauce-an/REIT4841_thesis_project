@@ -75,6 +75,7 @@ try:
     - Target: Circular diffuse scatterer (~12 mm diameter)
     - Grid: {num_x} (X) x {num_y} (Y) = {total_pixels:,} points
     - Focus: Z = 163766 native units (+20 um towards target vs scan 3, ~7.799 mm)
+    - Note: Scan 4 showed improved image quality over Scan 3, testing a closer focal distance (+20 um vs scan 3). If quality degrades, next step will back up to -10 um compared to Scan 3 (Z = 163136).
     - Configuration: High-Low Median-Split Demodulation with Software AC Coupling, 1000 Hz Chopper, 20 kHz DAQ, 32 periods avg (640 samples / 32.0 ms), 0.01%–99.9% Colormap Percentiles
     - Status: SUCCESSFUL
     - Saturated/Rail points: {sat_count:,} / {total_pixels:,} ({sat_pct:.2f}%)
